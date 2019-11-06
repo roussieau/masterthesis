@@ -1,5 +1,5 @@
 Malwares
 .DS_Store
 credentials.py
-__cache__
+__pycache__
 malwares
