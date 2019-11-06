@@ -1,0 +1,3 @@
+[submodule "src/Manalyze"]
+	path = src/Manalyze
+	url = https://github.com/JusticeRage/Manalyze.git
