@@ -21,6 +21,7 @@ def detectors():
 @app.route('/packers', methods=['GET', 'POST'])
 def packers():
     if request.method == "POST":
-        print(request.form)
+        db.addChange(request.form['old'], request.form['new'])
+        db.updatePacker(request.form['old'], request.form['new'])
     packers = db.getPackers()
     return render_template('packers.html', packers=packers)

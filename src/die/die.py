@@ -3,7 +3,7 @@ import json
 
 def dieAnalysis(malware):
     malwarePath = "{}/{}".format(malware.path, malware.name)
-    output = subprocess.check_output(["./die/diec.sh", "-showjson:yes", \
+    output = subprocess.check_output(["./die/die/diec.sh", "-showjson:yes", \
         "-singlelineoutput:no", malwarePath])
     try:
         data = json.loads(output.decode("utf-8"))

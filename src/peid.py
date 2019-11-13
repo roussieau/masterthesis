@@ -2,7 +2,7 @@ import peutils
 import pefile
 
 def peidAnalysis(malware):
-    with open('db_signatures.txt', encoding="ISO-8859-1",) as f: 
+    with open('SIG.txt', encoding="ISO-8859-1",) as f: 
         sig_data = f.read()
         signatures = peutils.SignatureDatabase(data=sig_data)
         malwarePath = "{}/{}".format(malware.path, malware.name)

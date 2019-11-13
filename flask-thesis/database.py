@@ -18,3 +18,23 @@ class Database:
     def getPackers(self):
         self.cur.execute("SELECT DISTINCT packer FROM detections")
         return self.cur.fetchall()
+
+    def getChanges(self):
+        self.cur.execute("SELECT * FROM changes")
+        return self.cur.fetchall()
+
+    def addChange(self, old, new):
+        self.cur.execute("SELECT * FROM changes WHERE old = %s AND new = %s", \
+            (old, new))
+        if len(self.cur.fetchall()) == 0:
+            self.cur.execute("INSERT INTO changes (old, new) VALUES (%s, %s)", \
+                (old, new))
+            self.conn.commit()
+
+    def updatePacker(self, old, new):
+        try:
+            self.cur.execute("UPDATE detections SET packer = %s WHERE packer LIKE %s", (new, old))
+        except psycopg2.Error as e:
+            print('Error to update').format(e)
+
+        self.conn.commit()
