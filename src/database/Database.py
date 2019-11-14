@@ -18,13 +18,13 @@ class Database:
         self.cursor.execute("SELECT count(*) FROM malwares M WHERE \
         M.date = '{}' AND M.hash = '{}';".format(date, malwareHash)) 
         if self.cursor.fetchone()[0] == 0:
-            print("new file")
+            #print("new file")
             self.cursor.execute("INSERT INTO malwares (date, hash) \
                 VALUES ('{}', '{}');".format(str(date), malwareHash))
             self.db.commit()
         self.cursor.execute("SELECT M.id FROM malwares M WHERE \
         M.date = '{}' AND M.hash = '{}';".format(date, malwareHash))
-        print("deja là")
+        #print("deja là")
         return self.cursor.fetchone()[0]
 
     def getAllMalwares(self):
