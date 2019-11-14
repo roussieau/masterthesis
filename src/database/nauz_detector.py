@@ -11,18 +11,21 @@ def main():
         print('Error : You need to pass the directory of malwares as argument')
         exit()
 
-    malwares = os.listdir(sys.argv[1])
-    date = sys.argv[1].split("/")[-2]
+    dates = os.listdir(sys.argv[1])
     db = Database()
-
-    for malware in malwares:
-        exe_path = sys.argv[1] + malware
-        output = str(subprocess.check_output(NAUZ+" "+exe_path, shell=True))
-        if "Packer" in output :
-        	packer = sanitize(output.split(":")[-1])
-        else :
-        	packer = "NULL"
-        db.addAnalysis(date, malware, "nauz", packer)
+    for date in dates:
+        if os.path.isdir(os.path.join(sys.argv[1],date)):
+            folder_path = "{}/{}".format(sys.argv[1], date)
+            files = os.listdir(folder_path)
+            validDate = date.replace("-","")
+            for malware in files:
+                exe_path = "{}/{}".format(folder_path, malware)
+                output = str(subprocess.check_output(NAUZ+" "+exe_path, shell=True))
+                if "Packer" in output :
+                	packer = sanitize(output.split(":")[-1])
+                else :
+                	packer = "NULL"
+                db.addAnalysis(validDate, malware, "nauz", packer)
 
 def sanitize(entry):
 	return entry.replace('\\n\'','').replace('\\n','')
