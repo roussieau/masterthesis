@@ -13,7 +13,7 @@ RUN pip3 install pefile
 
 # Installation of Manalyze
 RUN apt-get install -y libboost-regex-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libssl-dev build-essential cmake git
-WORKDIR Manalyze
+WORKDIR manalyze/Manalyze
 RUN cmake .
 RUN make
 WORKDIR /src
