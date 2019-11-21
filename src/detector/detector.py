@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 from malware import Malware
 
 def builder(initPath):
@@ -14,11 +15,24 @@ def builder(initPath):
 def analyse(malware):
     print("=================================")
     print(malware.name)
-    print("Peid      | {}".format(malware.peidAnalysis()))
-    print("Die       | {}".format(malware.dieAnalysis()))
-    print("Manalyze  | {}".format(malware.manalyzeAnalysis()))
+    if detectors.peid: 
+        print("Peid      | {}".format(malware.peidAnalysis()))
+
+    if detectors.die: 
+        print("Die       | {}".format(malware.dieAnalysis()))
+
+    if detectors.manalyze: 
+        print("Manalyze  | {}".format(malware.manalyzeAnalysis()))
     
 
 
 if __name__ == "__main__":
-    builder(sys.argv[1])
+    parser = argparse.ArgumentParser(description='Packer detector')
+    parser.add_argument('--peid', dest='nauz', action='store_true') 
+    parser.add_argument('--die', dest='die', action='store_true')
+    parser.add_argument('--manalyze', dest='manalyze', action='store_true')
+    parser.add_argument('path', action='store')
+
+    detectors = parser.parse_args()
+
+    builder(detectors.path)
