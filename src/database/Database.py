@@ -18,13 +18,11 @@ class Database:
         self.cursor.execute("SELECT count(*) FROM malwares M WHERE \
         M.date = '{}' AND M.hash = '{}';".format(date, malwareHash)) 
         if self.cursor.fetchone()[0] == 0:
-            #print("new file")
             self.cursor.execute("INSERT INTO malwares (date, hash) \
                 VALUES ('{}', '{}');".format(str(date), malwareHash))
             self.db.commit()
         self.cursor.execute("SELECT M.id FROM malwares M WHERE \
         M.date = '{}' AND M.hash = '{}';".format(date, malwareHash))
-        #print("deja là")
         return self.cursor.fetchone()[0]
 
     def getAllMalwares(self):
@@ -60,6 +58,30 @@ class Database:
     def getAllAnalysis(self):
         self.cursor.execute("SELECT * FROM detections D ")
         return self.cursor.fetchall()
+
+    def addFeature(self, number, desc):
+        self.cursor.execute("SELECT count(*) FROM features F WHERE \
+        F.num = '{}' AND F.description = '{}';".format(number, desc)) 
+        if self.cursor.fetchone()[0] == 0:
+            self.cursor.execute("INSERT INTO features (num, description) \
+                VALUES ('{}', '{}');".format(str(number), desc))
+            self.db.commit()
+
+    def getFeature(self, featureNum):        
+        self.cursor.execute("SELECT F.id FROM features F WHERE \
+        F.num = '{}';".format(featureNum)) 
+        return self.cursor.fetchone()[0]
+
+    def addFeatureValue(self, date, malwareHash, featureNum, value):
+        m_id = self.getMalware(date, malwareHash)
+        f_id = self.getFeature(featureNum)
+        self.cursor.execute("SELECT count(*) FROM feature_values V WHERE \
+        V.malware_id = '{}' AND V.feature_id = '{}' AND V.value = '{}';".format(m_id, f_id, value)) 
+        if self.cursor.fetchone()[0] == 0:
+            self.cursor.execute("INSERT INTO feature_values (malware_id, feature_id, value) \
+                    VALUES (%s,%s,%s);",(m_id, f_id, value))
+            self.db.commit()
+
 
     def clear(self):
         self.cursor.execute("DELETE FROM detections WHERE malware_id!=0")

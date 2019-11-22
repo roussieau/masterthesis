@@ -36,5 +36,5 @@ class Database:
             self.cur.execute("UPDATE detections SET packer = %s WHERE packer LIKE %s", (new, old))
         except psycopg2.Error as e:
             print('Error to update').format(e)
-
+        print("updated "+old+" to "+new)
         self.conn.commit()
