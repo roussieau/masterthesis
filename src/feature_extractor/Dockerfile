@@ -1,7 +1,7 @@
 FROM debian:sid
-RUN apt-get update && apt-get install -y build-essential cmake git python-yara python-pip && apt-get clean -y
+RUN apt-get update && apt-get install -y build-essential vim cmake git python-yara python-pip && apt-get clean -y
 RUN pip install -U pip
-RUN pip install pefile sklearn numpy scipy
+RUN pip install pefile sklearn numpy scipy psycopg2-binary
 
 RUN mkdir /pepac
 

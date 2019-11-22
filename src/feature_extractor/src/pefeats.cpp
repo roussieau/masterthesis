@@ -8,15 +8,15 @@
 
 /* This program, till now, and in the context of detection and classification of packed malware, extracts 119 features from the PE under analysis, all mentionnned just below :
 
-Feature 1 :  the DLLs characteristics 1
-Feature 2 :  the DLLs characteristics 2
-Feature 3 :  the DLLs characteristics 3
-Feature 4 :  the DLLs characteristics 4
-Feature 5 :  the DLLs characteristics 5
-Feature 6 :  the DLLs characteristics 6
-Feature 7 :  the DLLs characteristics 7
-Feature 8 :  the DLLs characteristics 8
-Feature 9 :  the Checksum
+Feature 1 : the DLLs characteristics 1
+Feature 2 : the DLLs characteristics 2
+Feature 3 : the DLLs characteristics 3
+Feature 4 : the DLLs characteristics 4
+Feature 5 : the DLLs characteristics 5
+Feature 6 : the DLLs characteristics 6
+Feature 7 : the DLLs characteristics 7
+Feature 8 : the DLLs characteristics 8
+Feature 9 : the Checksum
 Feature 10 : the Image Base
 Feature 11 : the Base of Code
 Feature 12 : the OS Major version
@@ -56,7 +56,7 @@ Feature 45 : the entropy of resource section
 Feature 46 : the entropy of PE header
 Feature 47 : the entropy of the entire PE file
 Feature 48 : the entropy of section holding the Entry point (EP) of the PE under analysis
-Feature 49 - 112 : 64 bytes folowing the EP, each byte for 1 feature position
+Feature 49 - 112 : 64 bytes following the EP, each byte for 1 feature position
 Feature 113 : the number of DLLs imported
 Feature 114 : the number of functions imported found in the import table directory (IDT)
 Feature 115 : the number of malicious APIs imported
