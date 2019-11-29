@@ -28,7 +28,7 @@ def analyse(malware):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Packer detector')
-    parser.add_argument('--peid', dest='nauz', action='store_true') 
+    parser.add_argument('--peid', dest='peid', action='store_true') 
     parser.add_argument('--die', dest='die', action='store_true')
     parser.add_argument('--manalyze', dest='manalyze', action='store_true')
     parser.add_argument('path', action='store')

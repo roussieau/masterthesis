@@ -1,0 +1,18 @@
+Metadata-Version: 1.1
+Name: peframe
+Version: 6.0.3
+Summary: peframe is a open source tool to perform static analysis on Portable Executable malware and malicious MS Office documents.
+Home-page: https://github.com/guelfoweb/peframe
+Author: Gianni 'guelfoweb' Amato
+Author-email: guelfoweb@gmail.com
+License: GNU
+Description: UNKNOWN
+Keywords: peframe
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7

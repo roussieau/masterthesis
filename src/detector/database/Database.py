@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3 
 import psycopg2
 from credentials import USERNAME, PASSWORD
+from utils import sanitize
 from datetime import datetime
 
 class Database: 
@@ -93,14 +94,40 @@ class Database:
         self.cursor.close()
         self.db.close()
 
-    def main(self):
+    def generateY(self,m_id,precision):
+        counter = 0
+        self.cursor.execute("SELECT packer FROM detections WHERE malware_id='{}';".format(m_id))
+        res = self.cursor.fetchall()
+        for i in res:
+            if "null" not in i:
+                counter+=1
+        if counter >= precision:
+            #print("1")
+            return 1
+        return 0
+        #else:
+            #print("0")
 
-        h = open("Nauzresult.txt","r")
-        lines = h.readlines()
-        for x in lines :
-            tab = x.split(" - ")
-            db.addAnalysis(20190615, tab[0], "Nauz", tab[2])
+    def buildGroundTruth(self,precision):
+        self.cursor.execute("SELECT id FROM malwares;")
+        id_list = self.cursor.fetchall()
+        for i in id_list:
+            res = self.generateY(i[0],precision)
+            print(str(i[0])+" - "+str(res))
+
+    def generateXY(self,m_id,precision):
+        self.cursor.execute("SELECT value FROM feature_values WHERE malware_id='{}';".format(m_id))
+        values = self.cursor.fetchall()
+        clean_values = sanitize(values)
+        y = self.generateY(m_id,precision)
+        clean_values.append(y)
+        print(clean_values)
+
+
+    def main(self):
+        print("yolo")
 
 if __name__ == "__main__":
     db = Database()
-    db.main()
+    #db.buildGroundTruth(2)
+    db.generateXY(16424,1)

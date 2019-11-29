@@ -1,0 +1,3 @@
+[console_scripts]
+peframe = peframe.peframecli
+

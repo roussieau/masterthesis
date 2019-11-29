@@ -1,0 +1,6 @@
+M2Crypto
+oletools
+pefile
+python-magic
+virustotal-api
+yara-python

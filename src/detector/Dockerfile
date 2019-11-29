@@ -4,8 +4,8 @@ WORKDIR src
 
 COPY . .
 
-RUN apt-get update
-RUN apt-get install -y dialog apt-utils
+RUN apt-get -y update
+RUN apt-get install -y dialog apt-utils git
 
 # Installation python
 RUN apt-get install -y python3 python3-pip
@@ -17,15 +17,13 @@ RUN apt-get install -y libboost-regex-dev libboost-program-options-dev libboost-
 WORKDIR manalyze/Manalyze
 RUN cmake .
 RUN make
-WORKDIR /src
 
-#Install Nauz
-RUN apt-get install -y qtcreator qt5-default
-RUN mkdir /nauz
-WORKDIR /nauz
-RUN git clone https://github.com/horsicq/Nauz-File-Detector.git
-WORKDIR /nauz/Nauz-File-Detector/
-RUN chmod 777 build_lin64.sh
-# RUN ./build_lin64.sh
+# Installation peframe
+WORKDIR /src/peframe
+RUN bash install.sh
+RUN pip3 install -r requirements.txt
+RUN python3 setup.py install
+
 WORKDIR /src
+ENTRYPOINT ["python3", "detector.py"]
 
