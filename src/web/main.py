@@ -10,13 +10,13 @@ app = Flask(__name__)
 db = Database()
 
 @app.route('/')
-def hello_world():
-    return 'Hello, World!'
+def index():
+    return render_template('index.html')
 
 @app.route('/detectors')
 def detectors():
     detectors = db.getDetectors()
-    return render_template('index.html', detectors=detectors)
+    return render_template('detectors.html', detectors=detectors)
 
 @app.route('/packers', methods=['GET', 'POST'])
 def packers():

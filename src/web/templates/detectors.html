@@ -1,0 +1,24 @@
+{% extends "header.html" %}
+
+{% block content %}
+<div class="container">
+  <h1> Detectors that we use </h1>
+  <!-- packers -->
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Name of the detecor</th>
+        <th scope="col">Number of scanned files</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for detector in detectors %}
+      <tr>
+        <td>{{detector.0}}</td>
+        <td>{{detector.1}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
