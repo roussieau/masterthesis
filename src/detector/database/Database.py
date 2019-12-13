@@ -16,6 +16,7 @@ class Database:
         self.cursor = self.db.cursor()
 
     def getMalware(self, date, malwareHash):
+        """Return the malware id"""
         self.cursor.execute("SELECT count(*) FROM malwares M WHERE \
         M.date = '{}' AND M.hash = '{}';".format(date, malwareHash)) 
         if self.cursor.fetchone()[0] == 0:

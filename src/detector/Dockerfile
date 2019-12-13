@@ -25,5 +25,3 @@ RUN pip3 install -r requirements.txt
 RUN python3 setup.py install
 
 WORKDIR /src
-ENTRYPOINT ["python3", "detector.py"]
-

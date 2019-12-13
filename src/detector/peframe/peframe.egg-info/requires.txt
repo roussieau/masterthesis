@@ -1,6 +1,6 @@
-M2Crypto
-oletools
 pefile
 python-magic
-virustotal-api
 yara-python
+virustotal-api
+oletools
+M2Crypto

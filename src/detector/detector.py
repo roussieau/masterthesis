@@ -23,7 +23,10 @@ def analyse(malware):
 
     if detectors.manalyze: 
         print("Manalyze  | {}".format(malware.manalyzeAnalysis()))
-    
+
+    if detectors.peframe: 
+        print("Peframe   | {}".format(malware.manalyzeAnalysis()))
+   
 
 
 if __name__ == "__main__":
@@ -31,6 +34,7 @@ if __name__ == "__main__":
     parser.add_argument('--peid', dest='peid', action='store_true') 
     parser.add_argument('--die', dest='die', action='store_true')
     parser.add_argument('--manalyze', dest='manalyze', action='store_true')
+    parser.add_argument('--peframe', dest='peframe', action='store_true')
     parser.add_argument('path', action='store')
 
     detectors = parser.parse_args()
