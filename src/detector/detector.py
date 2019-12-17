@@ -1,40 +1,52 @@
 import os
-import sys
 import argparse
 from malware import Malware
+import Database
+from progress.bar import Bar
+
 
 def builder(initPath):
     dates = os.listdir(initPath)
+    bar = Bar('Processing', max=len(dates))
     for date in dates:
+        bar.next()
         files = os.listdir("{}/{}".format(initPath, date))
         for f in files:
-           malware = Malware(date, f, initPath) 
-           analyse(malware)
+            malware = Malware(date, f, initPath)
+            analyse(malware)
+    bar.finish()
 
 
 def analyse(malware):
-    print("=================================")
-    print(malware.name)
-    if detectors.peid: 
-        print("Peid      | {}".format(malware.peidAnalysis()))
+    if detectors.peid:
+        showResult(malware.peidAnalysis, 'peid', malware)
 
-    if detectors.die: 
-        print("Die       | {}".format(malware.dieAnalysis()))
+    if detectors.die:
+        showResult(malware.dieAnalysis(), 'die', malware)
 
-    if detectors.manalyze: 
-        print("Manalyze  | {}".format(malware.manalyzeAnalysis()))
+    if detectors.manalyze:
+        showResult(malware.manalyzeAnalysis(), 'manalyze', malware)
 
-    if detectors.peframe: 
-        print("Peframe   | {}".format(malware.manalyzeAnalysis()))
-   
+    if detectors.peframe:
+        showResult(malware.manalyzeAnalysis(), 'peframe', malware)
+
+
+def showResult(result, nameOfDetector, malware):
+    if not detectors.quiet:
+        print('{} - {} - {}', malware.name, nameOfDetector, result)
+    if detectors.save:
+        db = Database()
+        db.addAnalysis(malware.date, malware.name, nameOfDetector, result)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Packer detector')
-    parser.add_argument('--peid', dest='peid', action='store_true') 
+    parser.add_argument('--peid', dest='peid', action='store_true')
     parser.add_argument('--die', dest='die', action='store_true')
     parser.add_argument('--manalyze', dest='manalyze', action='store_true')
     parser.add_argument('--peframe', dest='peframe', action='store_true')
+    parser.add_argument('--save', dest='save', action='store_true')
+    parser.add_argument('--quiet', dest='quiet', action='store_true')
     parser.add_argument('path', action='store')
 
     detectors = parser.parse_args()
