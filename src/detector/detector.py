@@ -19,7 +19,7 @@ def builder(initPath):
 
 def analyse(malware):
     if detectors.peid:
-        showResult(malware.peidAnalysis, 'peid', malware)
+        showResult(malware.peidAnalysis(), 'peid', malware)
 
     if detectors.die:
         showResult(malware.dieAnalysis(), 'die', malware)
@@ -33,7 +33,7 @@ def analyse(malware):
 
 def showResult(result, nameOfDetector, malware):
     if not detectors.quiet:
-        print('{} - {} - {}', malware.name, nameOfDetector, result)
+        print('{} - {} - {}'.format(malware.name, nameOfDetector, result))
     if detectors.save:
         db = Database()
         db.addAnalysis(malware.date, malware.name, nameOfDetector, result)

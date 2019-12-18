@@ -5,11 +5,11 @@ WORKDIR src
 COPY . .
 
 RUN apt-get -y update
-RUN apt-get install -y dialog apt-utils git
+RUN apt-get install -y dialog apt-utils git libpq-dev
 
 # Installation python
 RUN apt-get install -y python3 python3-pip
-RUN pip3 install pefile
+RUN pip3 install pefile psycopg2 progress
 
 # Installation of Manalyze
 RUN apt-get install -y libboost-regex-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libssl-dev build-essential cmake git vim nano wget
