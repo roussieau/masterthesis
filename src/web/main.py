@@ -9,6 +9,16 @@ URL = "postgresql://thesis:carpestudentem@revuedesingenieurs.be/thesis"
 app = Flask(__name__)
 db = Database()
 
+def convert(date):
+    """ Transform dates from 20190815 to 15/08/2018"""
+    cleanDate = date[0].replace('-', '')
+    number = date[1]
+    day = cleanDate[6:8]
+    month = cleanDate[4:6]
+    year = cleanDate[:4]
+    newDate = '{}/{}/{}'.format(day, month, year)
+    return (newDate, number)
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -17,6 +27,11 @@ def index():
 def detectors():
     detectors = db.getDetectors()
     return render_template('detectors.html', detectors=detectors)
+
+@app.route('/malwares')
+def malwares():
+    dates = map(convert, db.getCountByDates())
+    return render_template('malwares.html', dates=dates)
 
 @app.route('/packers', methods=['GET', 'POST'])
 def packers():

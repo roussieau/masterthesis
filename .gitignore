@@ -3,3 +3,4 @@ Malwares
 credentials.py
 __pycache__
 malwares
+config.py
