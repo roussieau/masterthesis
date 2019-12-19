@@ -17,7 +17,7 @@ def convert(date):
     month = cleanDate[4:6]
     year = cleanDate[:4]
     newDate = '{}/{}/{}'.format(day, month, year)
-    return (newDate, number)
+    return (newDate, number, date[0])
 
 @app.route('/')
 def index():
@@ -25,13 +25,18 @@ def index():
 
 @app.route('/detectors')
 def detectors():
-    detectors = db.getDetectors()
+    detectors = db.getAllDetectors()
     return render_template('detectors.html', detectors=detectors)
 
 @app.route('/malwares')
 def malwares():
     dates = map(convert, db.getCountByDates())
     return render_template('malwares.html', dates=dates)
+
+@app.route('/malwares/<date>')
+def dateDetail(date):
+    malwares = db.getMalwaresFromDate(date)
+    return render_template('malwaresByDate.html', malwares=malwares, date=date)
 
 @app.route('/packers', methods=['GET', 'POST'])
 def packers():
