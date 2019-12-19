@@ -1,7 +1,7 @@
 import os
 import argparse
 from malware import Malware
-import Database
+import database
 from progress.bar import Bar
 
 
