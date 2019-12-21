@@ -1,5 +1,6 @@
 FROM debian:sid
-RUN apt-get update && apt-get install -y build-essential vim cmake git python-yara python-pip && apt-get clean -y
+RUN apt-get update && apt-get install -y build-essential vim cmake git python-yara python-pip python3 python3-pip && apt-get clean -y
+RUN pip3 install psycopg2-binary progress
 RUN pip install -U pip
 RUN pip install pefile sklearn numpy scipy psycopg2-binary
 
@@ -14,6 +15,7 @@ RUN cmake ..
 RUN make
 
 ADD ./src /pepac/src
+ADD ./scripts /pepac/scripts
 WORKDIR /pepac/src
 RUN mkdir /pepac/build
 WORKDIR /pepac/build
