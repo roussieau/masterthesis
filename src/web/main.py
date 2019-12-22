@@ -38,6 +38,17 @@ def dateDetail(date):
     malwares = db.getMalwaresFromDate(date)
     return render_template('malwaresByDate.html', malwares=malwares, date=date)
 
+@app.route('/malwares/<date>/<name>')
+def malwareDetail(date, name):
+    print('date: {} - hash: {}'.format(date, name))
+    packers = db.getMalwareResult(date, name)
+    features = db.getFeatureResult(date, name)
+    return render_template('malwareDetail.html',
+                           packers=packers,
+                           name=name,
+                           features=features)
+
+
 @app.route('/packers', methods=['GET', 'POST'])
 def packers():
     if request.method == "POST":
