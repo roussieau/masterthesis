@@ -40,7 +40,6 @@ def dateDetail(date):
 
 @app.route('/malwares/<date>/<name>')
 def malwareDetail(date, name):
-    print('date: {} - hash: {}'.format(date, name))
     packers = db.getMalwareResult(date, name)
     features = db.getFeatureResult(date, name)
     return render_template('malwareDetail.html',
