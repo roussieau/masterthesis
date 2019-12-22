@@ -1,6 +1,4 @@
-from flask import Flask
-from flask import render_template
-from flask import request
+from flask import Flask, render_template, request, redirect
 from database import Database
 
 
@@ -52,6 +50,14 @@ def malwareDetail(date, name):
 def changes():
     changes = db.getChanges()
     return render_template('changes.html', changes=changes)
+
+@app.route('/changes/reload')
+def reloadChanges():
+    changes = db.getChanges()
+    for (old, new) in changes:
+        db.updatePacker(old, new)
+    redirect(url_for('changes'))
+
 
 @app.route('/packers', methods=['GET', 'POST'])
 def packers():
