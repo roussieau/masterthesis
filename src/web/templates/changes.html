@@ -1,0 +1,24 @@
+{% extends "header.html" %}
+
+{% block content %}
+<div class="container">
+  <h1> Changes that we do </h1>
+  <!-- packers -->
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Old</th>
+        <th scope="col">New</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for change in changes %}
+      <tr>
+        <td>{{change.0}}</td>
+        <td>{{change.1}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -48,6 +48,11 @@ def malwareDetail(date, name):
                            features=features)
 
 
+@app.route('/changes')
+def changes():
+    changes = db.getChanges()
+    return render_template('changes.html', changes=changes)
+
 @app.route('/packers', methods=['GET', 'POST'])
 def packers():
     if request.method == "POST":
