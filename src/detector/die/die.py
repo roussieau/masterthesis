@@ -3,14 +3,13 @@ import json
 
 def dieAnalysis(malware):
     malwarePath = "{}/{}".format(malware.path, malware.name)
-    output = subprocess.check_output(["./die/die/diec.sh", "-showjson:yes", \
-        "-singlelineoutput:no", malwarePath])
     try:
+        output = subprocess.check_output(["./die/die/diec.sh", "-showjson:yes", \
+        "-singlelineoutput:no", malwarePath])
         data = json.loads(output.decode("utf-8"))
         return getPacker(data)
     except:
-        print("Error to load json")
-        return None
+        return 'error' 
 
 def getPacker(data):
     for value in data["detects"]:

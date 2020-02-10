@@ -28,7 +28,7 @@ def analyse(malware):
         showResult(malware.manalyzeAnalysis(), 'manalyze', malware)
 
     if detectors.peframe:
-        showResult(malware.manalyzeAnalysis(), 'peframe', malware)
+        showResult(malware.peframeAnalysis(), 'peframe', malware)
 
 
 def showResult(result, nameOfDetector, malware):

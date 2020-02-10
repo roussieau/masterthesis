@@ -12,8 +12,7 @@ def peidAnalysis(malware):
         matches = signatures.match(pe, ep_only = True)
         return matches
     except Exception as e:
-        print("Bad file: {}".format(malwarePath))
-        print(str(e))
+        return 'error'
 
 
 

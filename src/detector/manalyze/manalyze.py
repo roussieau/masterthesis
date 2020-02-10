@@ -9,8 +9,7 @@ def manalyzeAnalysis(malware):
         data = json.loads(output.decode("utf-8"))
         return getPacker(data)
     except:
-        print("Error to load json")
-        return None
+        return 'error' 
 
 def getPacker(data):
     firstKey = list(data.keys())[0]
