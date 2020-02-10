@@ -1,13 +1,20 @@
 #!/usr/bin/python3
 import sys
+import pandas as pd
 from datetime import datetime
 sys.path.append('../web')
 from database import Database
 
 db = Database()
-malware_date = sys.argv[1]
-threshold = sys.argv[2]
-gt = db.getGroundTruth(malware_date, threshold)
+from_date = sys.argv[1]
+to_date = sys.argv[2]
+threshold = sys.argv[3]
+dt_array = []
+interval = db.getDates(from_date, to_date)
+for x in interval:
+	dt_array.append(db.getGroundTruth(x, threshold))
 now = datetime.now()
 timestamp = now.strftime("%Y.%m.%d-%H.%M")
+gt = pd.concat(dt_array)
+print("CSV generated contains %d entries." % gt.shape[0])
 gt.to_csv('../dumps/'+timestamp+'.csv',index=False)
