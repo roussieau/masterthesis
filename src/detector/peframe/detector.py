@@ -10,4 +10,4 @@ def peframeAnalysis(malware):
         data = json.loads(out)
         return data["peinfo"]["features"]["packer"]
     except:
-        return 'error'
+        return ['error']

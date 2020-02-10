@@ -28,7 +28,11 @@ def analyse(malware):
         showResult(malware.manalyzeAnalysis(), 'manalyze', malware)
 
     if detectors.peframe:
-        showResult(malware.peframeAnalysis(), 'peframe', malware)
+        packers = malware.peframeAnalysis()
+        if len(packers) == 0:
+            showResult('none', 'peframe', malware)
+        for packer in packers: 
+            showResult(packer, 'peframe', malware)
 
 
 def showResult(result, nameOfDetector, malware):
