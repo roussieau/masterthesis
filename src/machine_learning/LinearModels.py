@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
+from sklearn.feature_selection import SelectFromModel
+
 
 def display_plot_logreg(csv, t_size, min_c, max_c):
 	gt = pd.read_csv(csv)
@@ -54,3 +56,4 @@ def display_plot_svc(csv, t_size, min_c, max_c):
 	plt.ylabel("Accuracy")
 	plt.xlabel("C value")
 	plt.legend()
+
