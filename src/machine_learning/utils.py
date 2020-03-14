@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
+import csv
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectFromModel
 
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeClassifier
@@ -39,8 +41,8 @@ def feature_selection(csv, padd, kind):
 
 	def algo_picker(name): 
 	    switcher = { 
-	        "log": LogisticRegression(C=0.01, max_iter=100,random_state=0), 
-	        "svc": LinearSVC(C=0.01, max_iter=100,random_state=0), 
+	        "log": LogisticRegression(C=1, max_iter=10000,random_state=0), 
+	        "svc": LinearSVC(C=0.1, max_iter=10000,random_state=0), 
 	        "tree": DecisionTreeClassifier(max_depth=4,min_samples_split=0.1,min_samples_leaf=10,random_state=0),
 	        "forest": RandomForestClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
 	        "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
@@ -106,4 +108,40 @@ def feature_selection(csv, padd, kind):
 	show_plot(iterations[1:],previous_stats_tr,previous_stats_te,"After previous feature selection")
 	print("Training max value : %s" % max(previous_stats_tr))
 	print("Test max value : %s" % max(previous_stats_te))
+
+def thomas_parser(csv_path):
+	data = []
+	data_filter = []
+	target = []
+	target_filter = []
+	packers = []
+	packed_num = 1
+	with open(csv_path+'.csv', newline='') as csvfile:
+		darray = list(csv.reader(csvfile))
+	for row in darray:
+		if len(row) == 121:
+			data_filter.append(row[1:-1])
+			label = row[-1]
+			if label == "not packed":
+				target_filter.append(0)
+			else:
+				if label in packers :
+					target_filter.append(packers.index(label)+1)
+				else :
+					packers.append(label)
+					target_filter.append(packed_num)
+					packed_num+=1
+
+	data = np.array(data_filter)
+	df1 = pd.DataFrame(data=data[0:,0:],
+	                    index=[i for i in range(data.shape[0])],
+	                    columns=['f'+str(i) for i in range(data.shape[1])])
+	target = np.array(target_filter)
+	df2 = pd.DataFrame({'label':target})
+	df = df1.join(df2)
+	file_name = csv_path+"_thomas.csv"
+	df.to_csv(file_name,index=False)
+	return file_name
+
+
 
