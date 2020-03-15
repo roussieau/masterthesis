@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
+from sklearn.preprocessing import StandardScaler, Normalizer
 
 
 def display_plot_logreg(csv, t_size, min_c, max_c):
@@ -14,6 +15,10 @@ def display_plot_logreg(csv, t_size, min_c, max_c):
 	target = gt['label']
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = t_size, random_state = 0)
+	scaler = Normalizer()
+	scaler.fit(data_train)
+	data_train = scaler.transform(data_train)
+	data_test = scaler.transform(data_test)
 
 	training_accuracy = [] 
 	test_accuracy = []
@@ -39,6 +44,10 @@ def display_plot_svc(csv, t_size, min_c, max_c):
 	target = gt['label']
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = t_size, random_state = 0)
+	scaler = Normalizer()
+	scaler.fit(data_train)
+	data_train = scaler.transform(data_train)
+	data_test = scaler.transform(data_test)
 
 	training_accuracy = [] 
 	test_accuracy = []
