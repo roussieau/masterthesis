@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler, Normalizer
 
 
 def display_plot(csv, t_size, max_neigh):
@@ -14,6 +15,11 @@ def display_plot(csv, t_size, max_neigh):
 	target = gt['label']
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = t_size, random_state = 0)
+
+	scaler = Normalizer()
+	scaler.fit(data_train)
+	data_train = scaler.transform(data_train)
+	data_test = scaler.transform(data_test)
 
 	training_accuracy = [] 
 	test_accuracy = []
@@ -36,6 +42,10 @@ def sober_results(csv, t_size, neigh):
 	target = gt['label']
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = t_size, random_state = 0)
+	scaler = StandardScaler()
+	scaler.fit(data_train)
+	data_train = scaler.transform(data_train)
+	data_test = scaler.transform(data_test)
 
 	clf = KNeighborsClassifier(n_neighbors=neigh)
 	clf.fit(data_train, target_train)

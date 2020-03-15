@@ -1,16 +1,38 @@
 import pandas as pd
 import numpy as np
 import csv
+import time
+from tabulate import tabulate
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectFromModel
 
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler, Normalizer
+from sklearn.decomposition import PCA
+
+
+def algo_picker(name): 
+    switcher = { 
+    	"gaussian": GaussianNB(),
+    	"bernoulli": BernoulliNB(),
+        "log": LogisticRegression(C=0.01, max_iter=100,random_state=0), 
+        "svc": LinearSVC(C=0.01, max_iter=10000,random_state=0), 
+        "tree": DecisionTreeClassifier(max_depth=4,min_samples_split=0.1,min_samples_leaf=10,random_state=0),
+        "forest": RandomForestClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
+        "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
+        "svm": SVC(kernel='poly',C=0.1,gamma=100,degree=3),
+        "mlp1": MLPClassifier(solver='adam',activation='tanh',alpha=100,hidden_layer_sizes=(50, 50, 100)),
+        "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000)
+    } 
+  
+    return switcher.get(name, "nothing") 
 
 
 def feature_selection(csv, padd, kind):
@@ -39,19 +61,7 @@ def feature_selection(csv, padd, kind):
 		plt.legend()
 		plt.show()
 
-	def algo_picker(name): 
-	    switcher = { 
-	        "log": LogisticRegression(C=1, max_iter=10000,random_state=0), 
-	        "svc": LinearSVC(C=0.1, max_iter=10000,random_state=0), 
-	        "tree": DecisionTreeClassifier(max_depth=4,min_samples_split=0.1,min_samples_leaf=10,random_state=0),
-	        "forest": RandomForestClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
-	        "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
-	        "mlp": MLPClassifier(solver='adam',activation='tanh',alpha=100,hidden_layer_sizes=(50, 50, 100)),
-	    } 
-	  
-	    return switcher.get(name, "nothing") 
-
-
+	
 	logreg = algo_picker(kind)
 
 
@@ -60,6 +70,17 @@ def feature_selection(csv, padd, kind):
 
 		#Computing initial accuracies without tuning
 		data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = 1-t_size, random_state = 0)
+		if(kind == "log" or kind == "svc"):
+			scaler = Normalizer()
+			scaler.fit(data_train)
+			data_train = scaler.transform(data_train)
+			data_test = scaler.transform(data_test)
+			data_train = pd.DataFrame(data=data_train[0:,0:],
+				                    index=[i for i in range(data_train.shape[0])],
+				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+			data_test = pd.DataFrame(data=data_test[0:,0:],
+				                    index=[i for i in range(data_test.shape[0])],
+				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
 		print(data_train.shape)
 		logreg.fit(data_train, target_train)
 		basic_stats_tr.append(logreg.score(data_train, target_train))
@@ -78,6 +99,17 @@ def feature_selection(csv, padd, kind):
 		data = gt[new_current_set]
 		target = gt['label']
 		data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 1-t_size, random_state = 0)
+		if(kind == "log" or kind == "svc"):
+			scaler = Normalizer()
+			scaler.fit(data_train)
+			data_train = scaler.transform(data_train)
+			data_test = scaler.transform(data_test)
+			data_train = pd.DataFrame(data=data_train[0:,0:],
+				                    index=[i for i in range(data_train.shape[0])],
+				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+			data_test = pd.DataFrame(data=data_test[0:,0:],
+				                    index=[i for i in range(data_test.shape[0])],
+				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
 		logreg.fit(data_train, target_train)
 		transform_stats_tr.append(logreg.score(data_train, target_train))
 		transform_stats_te.append(logreg.score(data_test, target_test))
@@ -89,6 +121,17 @@ def feature_selection(csv, padd, kind):
 			data = gt[previous_set]
 			target = gt['label']
 			data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 1-t_size, random_state = 0)
+			if(kind == "log" or kind == "svc"):
+				scaler = Normalizer()
+				scaler.fit(data_train)
+				data_train = scaler.transform(data_train)
+				data_test = scaler.transform(data_test)
+				data_train = pd.DataFrame(data=data_train[0:,0:],
+					                    index=[i for i in range(data_train.shape[0])],
+					                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+				data_test = pd.DataFrame(data=data_test[0:,0:],
+					                    index=[i for i in range(data_test.shape[0])],
+					                    columns=['f'+str(i) for i in range(data_test.shape[1])])
 			logreg.fit(data_train, target_train)
 			previous_stats_tr.append(logreg.score(data_train, target_train))
 			previous_stats_te.append(logreg.score(data_test, target_test))
@@ -143,5 +186,36 @@ def thomas_parser(csv_path):
 	df.to_csv(file_name,index=False)
 	return file_name
 
+def PCA_reduction(csv, kind):
+	gt = pd.read_csv(csv)
+	cols = [col for col in gt.columns if col not in ['label']]
+	data = gt[cols]
+	target = gt['label']
 
+	clf = algo_picker(kind)
+
+	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+	scaler = StandardScaler()
+	scaler.fit(data_train)
+	data_train_raw = scaler.transform(data_train)
+	data_test_raw = scaler.transform(data_test)
+	cell_text = []
+	for i in [1,0.99,0.95,0.90,0.85]:
+	    row = []
+	    row.append(i)
+	    start = time.time()
+	    pca = PCA(i) if i != 1 else PCA()
+	    pca.fit(data_train_raw)
+	    data_train = pca.transform(data_train_raw)
+	    data_test = pca.transform(data_test_raw)
+	    clf.fit(data_train, target_train)
+	    end = time.time()
+	    row.append(clf.score(data_train, target_train))
+	    row.append(clf.score(data_test, target_test))
+	    row.append(pca.n_components_)
+	    row.append(end-start)
+	    cell_text.append(row)
+	print(tabulate(cell_text, headers = ['Variance','Training acc','Test acc','Components','Time (s)']))
+
+PCA_reduction('../dumps/2020.03.11-17.39.csv','svm')
 
