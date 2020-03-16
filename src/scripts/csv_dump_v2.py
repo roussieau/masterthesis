@@ -1,23 +1,50 @@
 #!/usr/bin/env python3 
 
 import psycopg2
+import argparse
 from datetime import datetime
 
 import pandas as pd
 
-def query_feature_values():
+def query_feature_values(only_bool=False):
     """ Query feature values to remote database"""
+    # if boolean features only
+    cond = ""
+    if only_bool:
+        for f_id in get_boolean_id():
+            cond += " {},".format(f_id[0])
+        
+        #build the condition, [:-1] is there to pick up the last ","
+        cond = "AND F.num IN (" + cond[:-1] + ") "
+
     print("Request feature values")
     cursor.execute("""
         SELECT FV.malware_id, F.num, FV.value
         FROM features F, feature_values FV
         WHERE FV.feature_id = F.id 
-        AND F.num IN (1, 2, 3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35, 36, 42, 118)
+        {}
         ORDER BY FV.malware_id, F.num;
-    """)
+    """.format(cond))
     features = cursor.fetchall()
-    print("Features loaded")
     return features
+
+def get_boolean_id():
+    """ Returns the num of the boolean values"""
+    print("Request boolean values")
+    cursor.execute("""
+        SELECT DISTINCT F.num 
+        FROM features F, feature_values FV 
+        WHERE FV.feature_id NOT IN 
+            (SELECT DISTINCT A.feature_id 
+             FROM feature_values A
+             WHERE A.value != 0
+                AND A.value != 1)
+            AND FV.feature_id = F.id
+        ORDER BY F.num;
+    """)
+    boolean_id = cursor.fetchall()
+    print("The num of boolean values are : {}".format(boolean_id))
+    return boolean_id
 
 def get_feature_labels(array):
     """ Returns the different features for the first malware"""
@@ -133,7 +160,11 @@ def create_csv(array, labels):
     print("File {}.csv created".format(timestamp))
 
 def main():
-    result_of_db = query_feature_values()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--bool_only", help="Return only boolean features",
+        action="store_true")
+    args = parser.parse_args()
+    result_of_db = query_feature_values(args.bool_only)
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
