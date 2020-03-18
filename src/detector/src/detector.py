@@ -12,6 +12,9 @@ class Malware:
         self.date = date
         self.path = path
 
+    def get_name(self):
+        return self.path.split("/")[-1]
+
 
 def main():
     date = sys.argv[1]
@@ -21,10 +24,10 @@ def main():
     peframe = Peframe(malware)
     manalyze = Manalyze(malware)
     peid = Peid(malware)
-    print("die: {}".format(die.analyze()))
-    print("peframe: {}".format(peframe.analyze()))
-    print("manalyze: {}".format(manalyze.analyze()))
-    print("peid: {}".format(peid.analyze()))
+    print(die)
+    print(manalyze)
+    print(peframe)
+    print(peid)
 
 if __name__ == '__main__':
     main()

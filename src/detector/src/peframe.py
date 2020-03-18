@@ -2,10 +2,12 @@ import peutils
 import pefile
 import subprocess
 import json
+from packer_detector import PackerDetector
 
-class Peframe:
-    def __init__(self, malware):
-        self.malware = malware
+class Peframe(PackerDetector):
+
+    def get_detector_name(self):
+        return "peframe"
 
     def analyze(self):
         try:

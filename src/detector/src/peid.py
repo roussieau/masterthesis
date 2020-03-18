@@ -1,9 +1,11 @@
 import peutils
 import pefile
+from packer_detector import PackerDetector
 
-class Peid:
-    def __init__(self, malware):
-        self.malware = malware
+class Peid(PackerDetector):
+
+    def get_detector_name(self):
+        return "peid"
 
     def analyze(self):
         with open('./../tools/peid/db_signatures.txt', encoding="ISO-8859-1",) as f: 

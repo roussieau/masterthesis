@@ -1,10 +1,11 @@
 import subprocess
 import json
+from packer_detector import PackerDetector
 
-class DetectItEasy:
-    
-    def __init__(self, malware):
-        self.malware = malware
+class DetectItEasy(PackerDetector):
+
+    def get_detector_name(self):
+        return "detect-it-easy"
 
     def analyze(self):
         try:
