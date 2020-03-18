@@ -7,3 +7,6 @@
 [submodule "src/detector/bin/Manalyze"]
 	path = src/detector/bin/Manalyze
 	url = https://github.com/JusticeRage/Manalyze.git
+[submodule "src/detector/bin/peframe"]
+	path = src/detector/bin/peframe
+	url = https://github.com/guelfoweb/peframe.git
