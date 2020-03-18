@@ -8,7 +8,7 @@ class DetectItEasy:
 
     def analyze(self):
         try:
-            output = subprocess.check_output(["./bin/detect-it-easy/diec.sh",
+            output = subprocess.check_output(["./tools/detect-it-easy/diec.sh",
                 "-showjson:yes", "-singlelineoutput:no", self.malware.path])
             data = json.loads(output.decode("utf-8"))
             return getPacker(data)

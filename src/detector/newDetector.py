@@ -4,6 +4,7 @@ import sys
 from newDie import DetectItEasy
 from newPeframe import Peframe
 from newManalyze import Manalyze
+from newPeid import Peid
 
 class Malware:
     def __init__(self, date, path):
@@ -19,9 +20,11 @@ def main():
     die = DetectItEasy(malware)
     peframe = Peframe(malware)
     manalyze = Manalyze(malware)
+    peid = Peid(malware)
     print("die: {}".format(die.analyze()))
     print("peframe: {}".format(peframe.analyze()))
     print("manalyze: {}".format(manalyze.analyze()))
+    print("peid: {}".format(peid.analyze()))
 
 if __name__ == '__main__':
     main()
