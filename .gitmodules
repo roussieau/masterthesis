@@ -4,3 +4,6 @@
 [submodule "src/machine_learning/introduction_to_ml_with_python"]
 	path = src/machine_learning/introduction_to_ml_with_python
 	url = https://github.com/amueller/introduction_to_ml_with_python
+[submodule "src/detector/bin/Manalyze"]
+	path = src/detector/bin/Manalyze
+	url = https://github.com/JusticeRage/Manalyze.git
