@@ -5,7 +5,7 @@
 	path = src/machine_learning/introduction_to_ml_with_python
 	url = https://github.com/amueller/introduction_to_ml_with_python
 [submodule "src/detector/bin/Manalyze"]
-	path = src/detector/bin/Manalyze
+	path = src/detector/bin/manalyze
 	url = https://github.com/JusticeRage/Manalyze.git
 [submodule "src/detector/bin/peframe"]
 	path = src/detector/bin/peframe
