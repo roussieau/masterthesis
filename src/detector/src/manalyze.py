@@ -7,7 +7,7 @@ class Manalyze:
 
     def analyze(self):
         try:
-            output = subprocess.check_output(["./tools/manalyze/bin/manalyze",
+            output = subprocess.check_output(["./../tools/manalyze/bin/manalyze",
             "--plugins=peid", "-o", "json", self.malware.path])
             data = json.loads(output)
             return getPacker(data)

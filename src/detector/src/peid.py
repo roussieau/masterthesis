@@ -6,7 +6,7 @@ class Peid:
         self.malware = malware
 
     def analyze(self):
-        with open('./tools/peid/db_signatures.txt', encoding="ISO-8859-1",) as f: 
+        with open('./../tools/peid/db_signatures.txt', encoding="ISO-8859-1",) as f: 
             try:
                 sig_data = f.read()
                 signatures = peutils.SignatureDatabase(data=sig_data)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import sys
-from newDie import DetectItEasy
-from newPeframe import Peframe
-from newManalyze import Manalyze
-from newPeid import Peid
+from detectItEasy import DetectItEasy
+from peframe import Peframe
+from manalyze import Manalyze
+from peid import Peid
 
 class Malware:
     def __init__(self, date, path):
