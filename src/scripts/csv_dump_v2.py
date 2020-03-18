@@ -6,10 +6,11 @@ from datetime import datetime
 
 import pandas as pd
 
-def query_feature_values(only_bool=False):
+def query_feature_values(only_bool, limit):
     """ Query feature values to remote database"""
     # if boolean features only
     cond = ""
+    limit = " LIMIT {}".format(limit) if limit != None else ""
     if only_bool:
         for f_id in get_boolean_id():
             cond += " {},".format(f_id[0])
@@ -23,8 +24,9 @@ def query_feature_values(only_bool=False):
         FROM features F, feature_values FV
         WHERE FV.feature_id = F.id 
         {}
-        ORDER BY FV.malware_id, F.num;
-    """.format(cond))
+        ORDER BY FV.malware_id, F.num
+        {};
+    """.format(cond, limit))
     features = cursor.fetchall()
     return features
 
@@ -162,9 +164,11 @@ def create_csv(array, labels):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--bool_only", help="Return only boolean features",
-        action="store_true")
+        action="store_true", default=False)
+    parser.add_argument("--limit", type=int, help="Limit number of malawares")
     args = parser.parse_args()
-    result_of_db = query_feature_values(args.bool_only)
+
+    result_of_db = query_feature_values(args.bool_only, args.limit)
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
