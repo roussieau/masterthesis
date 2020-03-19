@@ -24,7 +24,7 @@ class Database:
     def get_one(self, query, params):
         cursor = self.db.cursor()
         cursor.execute(query, params)
-        results = cursor.fetchone()[0]
+        results = cursor.fetchone()[0] if cursor.fetchone() != None else None
         cursor.close()
         return results
 
