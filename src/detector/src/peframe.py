@@ -14,6 +14,7 @@ class Peframe(PackerDetector):
             out = subprocess.check_output(['peframe', '-sj',
             self.malware.path], universal_newlines=True)
             data = json.loads(out)
-            return  data["peinfo"]["features"]["packer"] 
+            results = data["peinfo"]["features"]["packer"] 
+            return results if len(results) != 0 else None
         except:
             return ['error']
