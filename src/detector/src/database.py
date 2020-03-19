@@ -75,7 +75,6 @@ class Database:
             WHERE D.malware_id = %s AND D.detector_id = %s;
         """, (malware_id, detector_id)) 
         if len(results) == 0:
-            print("insert")
             self.insert("""
                 INSERT INTO detections (malware_id, detector_id, packer)
                 VALUES (%s,%s,%s);
