@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import argparse 
 from detectItEasy import DetectItEasy
 from peframe import Peframe
 from manalyze import Manalyze
@@ -12,7 +13,6 @@ db = Database()
 
 class Malware:
     def __init__(self, date, path):
-        splited_path = path.split("/")
         self.date = date
         self.path = path
 
@@ -22,19 +22,21 @@ class Malware:
     def get_id(self):
         return db.get_malware_id(self.date, self.get_name())
 
-    def analyze(self):
-        DetectItEasy(self).compute_and_save(show=True)
-        Peframe(self).compute_and_save(show=True)
-        Manalyze(self).compute_and_save(show=True)
-        Peid(self).compute_and_save(show=True)
-   
+    def analyze(self, show=False):
+        DetectItEasy(self).compute_and_save(show)
+        Peframe(self).compute_and_save(show)
+        Manalyze(self).compute_and_save(show)
+        Peid(self).compute_and_save(show)
 
 
 def main():
-    date = sys.argv[1]
-    path = sys.argv[2]
-    malware = Malware(date, path)
-    print("malware id: {}".format(malware.get_id()))
+    parser = argparse.ArgumentParser(description='Packer detector')
+    parser.add_argument('date', action='store', help='Date with the following\
+     structure YYYYMMDD')
+    parser.add_argument('path', action='store', help='Path to the malware')
+
+    args = parser.parse_args()
+    malware = Malware(args.date, args.path)
     malware.analyze()
 
 if __name__ == '__main__':
