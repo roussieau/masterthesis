@@ -23,10 +23,10 @@ class Malware:
         return db.get_malware_id(self.date, self.get_name())
 
     def analyze(self):
-        print(DetectItEasy(self))
-        print(Peframe(self).get_id())
-        print(Manalyze(self))
-        print(Peid(self))
+        DetectItEasy(self).compute_and_save(show=True)
+        Peframe(self).compute_and_save(show=True)
+        Manalyze(self).compute_and_save(show=True)
+        Peid(self).compute_and_save(show=True)
    
 
 
