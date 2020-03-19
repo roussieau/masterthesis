@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import argparse 
 from detectItEasy import DetectItEasy
 from peframe import Peframe
@@ -13,6 +14,7 @@ db = Database()
 
 class Malware:
     def __init__(self, date, path):
+        print("date: {}, path: {}".format(date, path))
         self.date = date
         self.path = path
 
@@ -28,16 +30,26 @@ class Malware:
         Manalyze(self).compute_and_save(show)
         Peid(self).compute_and_save(show)
 
+def builder(path):
+    dates = os.listdir(path)
+    for date in dates:
+        files = os.listdir("{}/{}".format(path, date)) 
+        for f in files:
+            yield (date, "{}/{}/{}".format(path, date, f))
 
 def main():
     parser = argparse.ArgumentParser(description='Packer detector')
-    parser.add_argument('date', action='store', help='Date with the following\
-     structure YYYYMMDD')
     parser.add_argument('path', action='store', help='Path to the malware')
+    parser.add_argument('--date', action='store', help='Date with the following\
+        structure YYYYMMDD')
+    parser.add_argument('--verbose', action='store_true', default=False,
+        help='Save to db')
 
     args = parser.parse_args()
-    malware = Malware(args.date, args.path)
-    malware.analyze()
+
+    malwares = builder(args.path) if args.date is None else [(args.date, args.path)]
+    for (date, path) in malwares:
+        Malware(date, path).analyze(args.verbose)
 
 if __name__ == '__main__':
     main()
