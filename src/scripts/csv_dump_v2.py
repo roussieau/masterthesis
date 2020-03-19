@@ -11,17 +11,17 @@ def query_feature_values(mode, limit, selection=None):
     """ Query feature values to remote database"""
    
     cond = ""
-    multiplicator = 1
+    multiplicator = 119
 
      # if boolean features only
     if mode == 1:
+        multiplicator = 0
         for f_id in get_boolean_id():
             multiplicator += 1
             cond += " {},".format(f_id[0])
         
         #build the condition, [:-1] is there to pick up the last ","
         cond = "AND F.num IN (" + cond[:-1] + ") "
-        multiplicator -= 1
     elif mode == 2:
         multiplicator = len(selection)
         for f in selection:
@@ -30,8 +30,8 @@ def query_feature_values(mode, limit, selection=None):
         #build the condition, [:-1] is there to pick up the last ","
         cond = "AND F.num IN (" + cond[:-1] + ") "
 
-    """ number of total features should be limit * wanted features (mode 0 is 119, mode 1 
-    is number of boolean features and mode 2 is length of selection array) """
+    # number of total features should be limit * wanted features (mode 0 is 119, mode 1 
+    # is number of boolean features and mode 2 is length of selection array) """
     limit = " LIMIT {}".format(limit*multiplicator) if limit != None else ""
     print("Request feature values")
     cursor.execute("""
@@ -142,6 +142,57 @@ def get_labels():
         """)
     return cursor.fetchall()
 
+def get_desired_labels(selection):
+    """ Returns the following tuple (malware_id, isPacked) with only wanted detectors"""
+    cond = ""
+    for f in selection:
+            cond += " '{}',".format(f)
+
+    #build the condition, [:-1] is there to pick up the last ","
+    cond = "(" + cond[:-1] + ") "
+
+    selection_size = len(selection)
+
+    request = "SELECT id FROM detectors WHERE name IN {}".format(cond)
+
+    cursor.execute("""
+        WITH desired_detectors AS ({}),
+        reduced_detections AS (
+            SELECT D.malware_id, D.detector_id, D.packer 
+            FROM detections D, desired_detectors P 
+            WHERE D.detector_id = P.id ORDER BY D.malware_id
+        ),
+        packed AS (
+          SELECT t1.date, t1.malware_id, t1.packer, t1.agree, t2.total
+          FROM (SELECT M.date, D.malware_id, D.packer, count(packer) AS agree
+                    FROM reduced_detections D, malwares M
+                    WHERE M.id = D.malware_id
+                    GROUP BY M.date, D.malware_id, D.packer) AS t1
+          JOIN(SELECT malware_id, count(DISTINCT detector_id) AS total
+                   FROM reduced_detections B
+                   GROUP BY malware_id
+                   HAVING count(DISTINCT detector_id) = {}
+          ) AS t2
+          ON t1.malware_id = t2.malware_id)
+        SELECT malware_id, 1 AS value
+        FROM packed A
+        WHERE NOT EXISTS(
+            SELECT * 
+            FROM packed B 
+            WHERE A.malware_id = B.malware_id  AND B.packer like 'none')
+        UNION 
+        SELECT malware_id, 1 AS value
+        FROM packed 
+        WHERE packer LIKE 'none' AND total - agree >= 1
+        UNION 
+        SELECT malware_id, 0 AS value
+        FROM packed 
+        WHERE packer LIKE 'none' AND total - agree < 1
+        ORDER BY malware_id
+        """.format(request, selection_size))
+    return cursor.fetchall()
+
+
 def merge_fv_and_label(feature_values, labels):
     """Merge feature values with corresponding label"""
     fv_index = 0
@@ -193,19 +244,26 @@ def main():
                         default=0)
     parser.add_argument("-a",
                         "--arr",
-                        nargs='+', 
+                        nargs="+", 
                         help="Array of wanted features e.g. 46 87 101 119")
+    parser.add_argument("-d",
+                        "--detector",
+                        nargs="+",
+                        help=textwrap.dedent('''\
+                            Array of wanted detectors with values 
+                            in [peframe, peid, manalyze, cisco, detect-it-easy]
+                            '''))
 
     args = parser.parse_args()
     if args.mode == 2 and args.arr is None:
         parser.error("mode 2 requires array of features, -h for help")
 
     result_of_db = query_feature_values(args.mode, args.limit, args.arr)
-    
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
     labels = get_labels()
+    #labels = get_desired_labels(args.detector)
     final_array = merge_fv_and_label(features, labels)
     create_csv(final_array, name_of_features)
 
