@@ -24,9 +24,11 @@ class Database:
     def get_one(self, query, params):
         cursor = self.db.cursor()
         cursor.execute(query, params)
-        results = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        if result:
+            result = result[0]
         cursor.close()
-        return results
+        return result
 
     def insert(self, query, params):
         cursor = self.db.cursor()
@@ -42,12 +44,12 @@ class Database:
             FROM malwares M 
             WHERE M.date = %s AND M.hash = %s;
         """, (date, malware_hash))
-        if malware_id != None:
+        if malware_id:
             return malware_id
         else: 
             self.insert("""
                 INSERT INTO malwares (date, hash)
-                VALUES ('{}', '{}');
+                VALUES (%s, %s);
             """, (str(date), malware_hash))
             return self.get_malware_id(date, malware_hash)
 
@@ -57,30 +59,27 @@ class Database:
             FROM detectors D
             WHERE D.name = %s;
         """, (detector_name,)) 
-        if detector_id != None:
+        if detector_id:
             return detector_id
         else: 
             self.insert("""
                 INSERT INTO detectors (name)
                 VALUES (%s);
             """, (detector,))
-        return self.get_detector_id(detector_name)
+            return self.get_detector_id(detector_name)
 
     def add_analysis(self, malware_id, detector_id, packer):
         results = self.get_all("""
-            SELECT count(*) 
+            SELECT * 
             FROM detections D
             WHERE D.malware_id = %s AND D.detector_id = %s;
         """, (malware_id, detector_id)) 
         if len(results) == 0:
+            print("insert")
             self.insert("""
                 INSERT INTO detections (malware_id, detector_id, packer)
                 VALUES (%s,%s,%s);
             """, (malware_id, detector_id, packer))
-
-    def getAllAnalysis(self):
-        self.cursor.execute("SELECT * FROM detections D ")
-        return self.cursor.fetchall()
 
     def addFeature(self, number, desc):
         self.cursor.execute("SELECT count(*) FROM features F WHERE \
@@ -89,11 +88,6 @@ class Database:
             self.cursor.execute("INSERT INTO features (num, description) \
                 VALUES ('{}', '{}');".format(str(number), desc))
             self.db.commit()
-
-    def getFeature(self, featureNum):        
-        self.cursor.execute("SELECT F.id FROM features F WHERE \
-        F.num = '{}';".format(featureNum)) 
-        return self.cursor.fetchone()[0]
 
     def addFeatureValue(self, date, malwareHash, featureNum, value):
         m_id = self.getMalware(date, malwareHash)
