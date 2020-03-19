@@ -1,45 +1,70 @@
 #!/usr/local/bin/python3 
 import psycopg2
 from datetime import datetime
+import os
 
 class Database: 
     def __init__(self):
         self.db = psycopg2.connect(
-            database="thesis", 
-            user=USERNAME, 
-            password=PASSWORD, 
-            host="revuedesingenieurs.be", 
-            port="5432"
+            database = "thesis", 
+            user = os.environ.get("USER"), 
+            password = os.environ.get("PASSWORD"), 
+            host = "revuedesingenieurs.be", 
+            port = "5432"
         )
         self.cursor = self.db.cursor()
 
-    def getMalware(self, date, malwareHash):
+    def get_all(self, query, params):
+        cursor = self.db.cursor()
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        cursor.close()
+        return results
+
+    def get_one(self, query, params):
+        cursor = self.db.cursor()
+        cursor.execute(query, params)
+        results = cursor.fetchone()[0]
+        cursor.close()
+        return results
+
+    def insert(self, query, params):
+        cursor = self.db.cursor()
+        cursor.execute(query, params)
+        self.db.commit()
+        cursor.close()
+        
+
+    def get_malware_id(self, date, malware_hash):
         """Return the malware id"""
-        self.cursor.execute("SELECT count(*) FROM malwares M WHERE \
-        M.date = '{}' AND M.hash = '{}';".format(date, malwareHash)) 
-        if self.cursor.fetchone()[0] == 0:
-            self.cursor.execute("INSERT INTO malwares (date, hash) \
-                VALUES ('{}', '{}');".format(str(date), malwareHash))
-            self.db.commit()
-        self.cursor.execute("SELECT M.id FROM malwares M WHERE \
-        M.date = '{}' AND M.hash = '{}';".format(date, malwareHash))
-        return self.cursor.fetchone()[0]
+        malware_id = self.get_one("""
+            SELECT M.id 
+            FROM malwares M 
+            WHERE M.date = %s AND M.hash = %s;
+        """, (date, malware_hash))
+        if malware_id != None:
+            return malware_id
+        else: 
+            self.insert("""
+                INSERT INTO malwares (date, hash)
+                VALUES ('{}', '{}');
+            """, (str(date), malwareHash))
+            return self.get_malware_id(date, malware_hash)
 
-    def getAllMalwares(self):
-        self.cursor.execute("SELECT * FROM malwares M ")
-        return self.cursor.fetchall()
-
-    def getDetector(self, detector):
-        self.cursor.execute("SELECT count(*) FROM detectors D WHERE \
-        D.name = '{}';".format(detector)) 
-        if self.cursor.fetchone()[0] == 0:
-            print("new detector")
-            self.cursor.execute("INSERT INTO detectors (name) \
-                VALUES ('{}');".format(detector))
-            self.db.commit()
-        self.cursor.execute("SELECT D.id FROM detectors D WHERE \
-        D.name = '{}';".format(detector)) 
-        return self.cursor.fetchone()[0]
+    def get_detector_id(self, detector_name):
+        detector_id = self.get_one("""
+            SELECT count(*)
+            FROM detectors D
+            WHERE D.name = %s;
+        """, (detector_name,)) 
+        if detector_id != None:
+            return detector_id
+        else: 
+            self.insert("""
+                INSERT INTO detectors (name)
+                VALUES (%s);
+            """, (detector,))
+        return self.get_detector_id(detector_name)
 
     def getAllDetectors(self):
         self.cursor.execute("SELECT * FROM detectors D ")
@@ -93,40 +118,5 @@ class Database:
         self.cursor.close()
         self.db.close()
 
-    def generateY(self,m_id,precision):
-        counter = 0
-        self.cursor.execute("SELECT packer FROM detections WHERE malware_id='{}';".format(m_id))
-        res = self.cursor.fetchall()
-        for i in res:
-            if "null" not in i:
-                counter+=1
-        if counter >= precision:
-            #print("1")
-            return 1
-        return 0
-        #else:
-            #print("0")
-
-    def buildGroundTruth(self,precision):
-        self.cursor.execute("SELECT id FROM malwares;")
-        id_list = self.cursor.fetchall()
-        for i in id_list:
-            res = self.generateY(i[0],precision)
-            print(str(i[0])+" - "+str(res))
-
-    def generateXY(self,m_id,precision):
-        self.cursor.execute("SELECT value FROM feature_values WHERE malware_id='{}';".format(m_id))
-        values = self.cursor.fetchall()
-        clean_values = sanitize(values)
-        y = self.generateY(m_id,precision)
-        clean_values.append(y)
-        print(clean_values)
-
-
-    def main(self):
-        print("yolo")
-
 if __name__ == "__main__":
     db = Database()
-    #db.buildGroundTruth(2)
-    db.generateXY(16424,1)
