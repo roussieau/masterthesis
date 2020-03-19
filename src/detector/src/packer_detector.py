@@ -1,6 +1,6 @@
 from database import Database
 
-db = Database
+db = Database()
 
 class PackerDetector:
     def __init__(self, malware):
@@ -13,7 +13,14 @@ class PackerDetector:
         pass
 
     def get_id(self):
-        return db.get_detector_id(self.get_detector_name())
+        return db.get_detector_id(detector_name=self.get_detector_name())
+
+    def compute_and_save(self, show=False):
+        results = self.analyze()
+        if show:
+            print(results)
+        for result in results: 
+            db.add_analysis(self.malware.get_id(), self.get_id(), result)
 
     def __str__(self):
         result = self.analyze()
