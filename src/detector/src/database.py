@@ -24,7 +24,7 @@ class Database:
     def get_one(self, query, params):
         cursor = self.db.cursor()
         cursor.execute(query, params)
-        results = cursor.fetchone()[0] if cursor.fetchone() != None else None
+        results = cursor.fetchone()[0]
         cursor.close()
         return results
 
@@ -48,12 +48,12 @@ class Database:
             self.insert("""
                 INSERT INTO malwares (date, hash)
                 VALUES ('{}', '{}');
-            """, (str(date), malwareHash))
+            """, (str(date), malware_hash))
             return self.get_malware_id(date, malware_hash)
 
     def get_detector_id(self, detector_name):
         detector_id = self.get_one("""
-            SELECT count(*)
+            SELECT D.id 
             FROM detectors D
             WHERE D.name = %s;
         """, (detector_name,)) 
@@ -66,19 +66,17 @@ class Database:
             """, (detector,))
         return self.get_detector_id(detector_name)
 
-    def getAllDetectors(self):
-        self.cursor.execute("SELECT * FROM detectors D ")
-        return self.cursor.fetchall()
-
-    def addAnalysis(self, date, malwareHash, detector, packer):
-        m_id = self.getMalware(date, malwareHash)
-        d_id = self.getDetector(detector)
-        self.cursor.execute("SELECT count(*) FROM detections D WHERE \
-        D.malware_id = '{}' AND D.detector_id = '{}';".format(m_id, d_id)) 
-        if self.cursor.fetchone()[0] == 0:
-            self.cursor.execute("INSERT INTO detections (malware_id, detector_id, packer) \
-                    VALUES (%s,%s,%s);",(m_id, d_id, packer))
-            self.db.commit()
+    def add_analysis(self, malware_id, detector_id, packer):
+        results = self.get_all("""
+            SELECT count(*) 
+            FROM detections D
+            WHERE D.malware_id = %s AND D.detector_id = %s;
+        """, (malware_id, detector_id)) 
+        if len(results) == 0:
+            self.insert("""
+                INSERT INTO detections (malware_id, detector_id, packer)
+                VALUES (%s,%s,%s);
+            """, (malware_id, detector_id, packer))
 
     def getAllAnalysis(self):
         self.cursor.execute("SELECT * FROM detections D ")
