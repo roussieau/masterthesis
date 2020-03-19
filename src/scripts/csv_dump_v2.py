@@ -2,22 +2,37 @@
 
 import psycopg2
 import argparse
+import textwrap
 from datetime import datetime
 
 import pandas as pd
 
-def query_feature_values(only_bool, limit):
+def query_feature_values(mode, limit, selection=None):
     """ Query feature values to remote database"""
-    # if boolean features only
+   
     cond = ""
-    limit = " LIMIT {}".format(limit) if limit != None else ""
-    if only_bool:
+    multiplicator = 1
+
+     # if boolean features only
+    if mode == 1:
         for f_id in get_boolean_id():
+            multiplicator += 1
             cond += " {},".format(f_id[0])
         
         #build the condition, [:-1] is there to pick up the last ","
         cond = "AND F.num IN (" + cond[:-1] + ") "
+        multiplicator -= 1
+    elif mode == 2:
+        multiplicator = len(selection)
+        for f in selection:
+            cond += " {},".format(f)
 
+        #build the condition, [:-1] is there to pick up the last ","
+        cond = "AND F.num IN (" + cond[:-1] + ") "
+
+    """ number of total features should be limit * wanted features (mode 0 is 119, mode 1 
+    is number of boolean features and mode 2 is length of selection array) """
+    limit = " LIMIT {}".format(limit*multiplicator) if limit != None else ""
     print("Request feature values")
     cursor.execute("""
         SELECT FV.malware_id, F.num, FV.value
@@ -89,7 +104,7 @@ def get_feature_values(array, number_of_features):
 
 
     print("Number of malwares: {}".format(len(final_array)))
-    print("There is some troubles with {} malwares " \
+    print("There is some trouble with {} malware(s) " \
         .format(len(malwares_error)))
 
     return final_array
@@ -162,13 +177,31 @@ def create_csv(array, labels):
     print("File {}.csv created".format(timestamp))
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--bool_only", help="Return only boolean features",
-        action="store_true", default=False)
-    parser.add_argument("--limit", type=int, help="Limit number of malawares")
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-l",
+                        "--limit", 
+                        type=int, 
+                        help="Limit number of malwares")
+    parser.add_argument("-m",
+                        "--mode",
+                        type=int,
+                        help=textwrap.dedent('''\
+                                0 (default): all features
+                                1: only boolean features
+                                2: features from parameter array
+                                 '''),
+                        default=0)
+    parser.add_argument("-a",
+                        "--arr",
+                        nargs='+', 
+                        help="Array of wanted features e.g. 46 87 101 119")
 
-    result_of_db = query_feature_values(args.bool_only, args.limit)
+    args = parser.parse_args()
+    if args.mode == 2 and args.arr is None:
+        parser.error("mode 2 requires array of features, -h for help")
+
+    result_of_db = query_feature_values(args.mode, args.limit, args.arr)
+    
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
