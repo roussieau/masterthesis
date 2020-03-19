@@ -1,3 +1,7 @@
+from database import Database
+
+db = Database
+
 class PackerDetector:
     def __init__(self, malware):
         self.malware = malware
@@ -7,6 +11,9 @@ class PackerDetector:
 
     def get_detector_name(self):
         pass
+
+    def get_id(self):
+        return db.get_detector_id(self.get_detector_name())
 
     def __str__(self):
         result = self.analyze()
