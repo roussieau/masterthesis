@@ -7,6 +7,7 @@ from detectItEasy import DetectItEasy
 from peframe import Peframe
 from manalyze import Manalyze
 from peid import Peid
+from pefeats import Pefeats
 from database import Database
 import os
 
@@ -23,6 +24,14 @@ class Malware:
 
     def get_id(self):
         return db.get_malware_id(self.date, self.get_name())
+
+    def print_all(self):
+        print(DetectItEasy(self))
+        print(Peframe(self))
+        print(Manalyze(self))
+        print(Peid(self))
+        print(Pefeats(self))
+
 
     def analyze(self, show=False):
         DetectItEasy(self).compute_and_save(show)
@@ -42,6 +51,7 @@ def main():
     parser.add_argument('path', action='store', help='Path to the malware')
     parser.add_argument('--date', action='store', help='Date with the following\
         structure YYYYMMDD')
+    parser.add_argument('--print', action='store_true', help="Only show result")
     parser.add_argument('--verbose', action='store_true', default=False,
         help='Save to db')
 
@@ -49,7 +59,10 @@ def main():
 
     malwares = builder(args.path) if args.date is None else [(args.date, args.path)]
     for (date, path) in malwares:
-        Malware(date, path).analyze(args.verbose)
+        malware = Malware(date, path) #.analyze(args.verbose)
+        if args.print:
+            malware.print_all()
+
 
 if __name__ == '__main__':
     main()
