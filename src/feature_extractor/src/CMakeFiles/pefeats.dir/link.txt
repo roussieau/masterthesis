@@ -1,1 +1,0 @@
-/usr/bin/c++   -O3   CMakeFiles/pefeats.dir/pefeats.cpp.o  -o pefeats -lCMAKE_CURRENT_LIST_DIR/pelib/libpelib.a 
