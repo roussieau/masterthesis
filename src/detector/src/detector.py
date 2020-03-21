@@ -49,8 +49,6 @@ class Malware:
         Peid(self).compute(save, show)
 
     def auto(self, save=False, show=False):
-        print("Malware id: {}".format(self.get_id()))
-        print(self.have_feature_values())
         if not self.have_detections():
             self.compute(save=save, show=show)
         if not self.have_feature_values():
