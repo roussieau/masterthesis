@@ -99,24 +99,38 @@ class Database:
         """, (malware_id,))
         return True if result and result >= NUMBER_OF_FEATURES else False
 
-    def addFeature(self, number, desc):
-        self.cursor.execute("SELECT count(*) FROM features F WHERE \
-        F.num = '{}' AND F.description = '{}';".format(number, desc)) 
-        if self.cursor.fetchone()[0] == 0:
-            self.cursor.execute("INSERT INTO features (num, description) \
-                VALUES ('{}', '{}');".format(str(number), desc))
-            self.db.commit()
-        
+    #def add_feature(self, number, desc):
+    #    self.cursor.execute("SELECT count(*) FROM features F WHERE \
+    #    F.num = '{}' AND F.description = '{}';".format(number, desc)) 
+    #    if self.cursor.fetchone()[0] == 0:
+    #        self.cursor.execute("INSERT INTO features (num, description) \
+    #            VALUES ('{}', '{}');".format(str(number), desc))
+    #        self.db.commit()
 
-    def addFeatureValue(self, date, malwareHash, featureNum, value):
-        m_id = self.getMalware(date, malwareHash)
-        f_id = self.getFeature(featureNum)
-        self.cursor.execute("SELECT count(*) FROM feature_values V WHERE \
-        V.malware_id = '{}' AND V.feature_id = '{}' AND V.value = '{}';".format(m_id, f_id, value)) 
-        if self.cursor.fetchone()[0] == 0:
-            self.cursor.execute("INSERT INTO feature_values (malware_id, feature_id, value) \
-                    VALUES (%s,%s,%s);",(m_id, f_id, value))
-            self.db.commit()
+
+    def get_feature_id(self, feature_num):
+        return self.get_one("""
+            SELECT id
+            FROM features
+            WHERE num = %s
+        """, (feature_num,))
+
+    def add_feature_value(self, malware_id, feature_num, value):
+        feature_id = self.get_feature_id(feature_num)
+        if not feature_id:
+            print("Error in add_feature_value(), feature n {} doesn't exists" \
+                .format(feature_num))
+            return
+        number = self.get_one("""
+            SELECT count(*)
+            FROM feature_values V
+            WHERE V.malware_id = %s AND V.feature_id = %s AND V.value = %s;
+        """, (malware_id, feature_id, value)) 
+        if number == 0:
+            self.insert("""
+                INSERT INTO feature_values (malware_id, feature_id, value)
+                VALUES (%s,%s,%s);
+            """, (malware_id, feature_num, value))
 
 
     def clear(self):

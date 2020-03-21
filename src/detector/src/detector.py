@@ -31,9 +31,11 @@ class Malware:
         return db.have_detections(self.get_id())
 
     def have_feature_values(self):
-        return db.have_detections(self.get_id())
+        return db.have_feature_values(self.get_id())
 
     def print_all(self):
+        print("===============================")
+        print("malware id: {}".format(self.get_malware_id()))
         print(DetectItEasy(self))
         print(Peframe(self))
         print(Manalyze(self))
@@ -47,10 +49,12 @@ class Malware:
         Peid(self).compute(save, show)
 
     def auto(self, save=False, show=False):
+        print("Malware id: {}".format(self.get_id()))
+        print(self.have_feature_values())
         if not self.have_detections():
             self.compute(save=save, show=show)
         if not self.have_feature_values():
-            print(self.get_feature_values())
+            Pefeats(self).compute(save=save, show=show)
 
 def builder(path):
     dates = os.listdir(path)
@@ -71,12 +75,17 @@ def main():
 
     parser.add_argument('--verbose', '-v',
                         action='store_true',
-                        help="Only show result")
+                        help="Verbose")
 
     parser.add_argument('--auto',
                         default=False,
                         action='store_true',
                         help="Auto scan")
+
+    parser.add_argument('--features',
+                        default=False,
+                        action='store_true',
+                        help="Extract feature values")
 
     parser.add_argument('--save',
                         action='store_true',
@@ -84,13 +93,19 @@ def main():
                         help='Save to db')
 
     args = parser.parse_args()
-
+    
+    #if --date is given
     malwares = builder(args.path) if args.date is None else [(args.date, args.path)]
+
+    #Run
     for (date, path) in malwares:
         malware = Malware(date, path)
         if args.auto:
             malware.auto(save=args.save, show=args.verbose)
-
+        else:
+            malware.compute(save=args.save, show=args.verbose)
+            if args.features:
+                malware.get_feature_values()
 
 if __name__ == '__main__':
     main()
