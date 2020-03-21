@@ -19,11 +19,9 @@ RUN git clone https://github.com/avast-tl/pelib.git
 WORKDIR pelib/build
 RUN cmake ..
 RUN make
-RUN ls src/pelib/
 
 WORKDIR /detector/tools/pefeats/build
 RUN cmake ..
-RUN ls /detector/tools/pepac/pelib/src/pelib
 RUN make
 
 WORKDIR /detector
