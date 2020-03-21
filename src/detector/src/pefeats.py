@@ -8,9 +8,13 @@ class Pefeats:
         self.malware = malware
 
     def analyze(self):
-        output = subprocess.check_output(["./../tools/pefeats/build/pefeats",
+        try:
+            output = subprocess.check_output(["./../tools/pefeats/build/pefeats",
             self.malware.path])
-        return output.decode('utf-8').split(',')[1:]
+            return output.decode('utf-8').split(',')[1:]
+        except:
+            return []
+
 
     def compute(self, save=False, show=False):
         results = self.analyze()

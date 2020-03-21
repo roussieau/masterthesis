@@ -26,18 +26,18 @@ def need_to_scan(date):
         db.get_number_of_feature_values(date) < THRESHOLD_FEATURE
 
 def scan(date, f):
-    zipped_path = "./malwares/{}".format(f)
-    new_folder = "./malwares/{}".format(date)
-    subprocess.run(["scp", "shadow:~/malware/{}".format(f), zipped_path])
-    subprocess.run(["unzip", zipped_path, "-d", new_folder])
+    zipped_path = "/malwares/{}".format(f)
+    new_folder = "/malwares/{}".format(date)
+    subprocess.run(["scp", "-i", "/shad", "stud@shadow1.info.ucl.ac.be:~/malware/{}".format(f), zipped_path])
+    subprocess.run(["unzip", zipped_path, "-d", new_folder, "-q"])
     subprocess.run(["rm", "-r", zipped_path]) 
-    subprocess.run(["./detector.py", "./malwares", "--verbose", "--auto"])
+    subprocess.run(["./detector.py", "/malwares", "--save", "--auto"])
     subprocess.run(["rm", "-r", new_folder]) 
     
 
 def main():
     try:
-        list_of_files = subprocess.check_output(["ssh", "shadow",
+        list_of_files = subprocess.check_output(["ssh", "stud@shadow1.info.ucl.ac.be", "-i", "/shad",
             "ls", "malware"]).decode("utf-8").split("\n")
     except:
         print("Error to connect in ssh")
