@@ -3,6 +3,9 @@ import psycopg2
 from datetime import datetime
 import os
 
+NUMBER_OF_DETECTORS = 4 # + CISCO
+NUMBER_OF_FEATURES = 119
+
 class Database: 
     def __init__(self):
         self.db = psycopg2.connect(
@@ -80,6 +83,22 @@ class Database:
                 VALUES (%s,%s,%s);
             """, (malware_id, detector_id, packer))
 
+    def have_detections(self, malware_id):
+        result = self.get_one("""
+            SELECT count(DISTINCT detector_id)
+            FROM detections
+            WHERE malware_id = %s
+        """, (malware_id,))
+        return True if result and result >= NUMBER_OF_DETECTORS else False
+
+    def have_feature_values(self, malware_id):
+        result = self.get_one("""
+            SELECT count(DISTINCT feature_id)
+            FROM feature_values 
+            WHERE malware_id = %s
+        """, (malware_id,))
+        return True if result and result >= NUMBER_OF_FEATURES else False
+
     def addFeature(self, number, desc):
         self.cursor.execute("SELECT count(*) FROM features F WHERE \
         F.num = '{}' AND F.description = '{}';".format(number, desc)) 
@@ -87,6 +106,7 @@ class Database:
             self.cursor.execute("INSERT INTO features (num, description) \
                 VALUES ('{}', '{}');".format(str(number), desc))
             self.db.commit()
+        
 
     def addFeatureValue(self, date, malwareHash, featureNum, value):
         m_id = self.getMalware(date, malwareHash)

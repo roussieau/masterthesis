@@ -10,6 +10,9 @@ class Pefeats:
             self.malware.path])
         return output.decode('utf-8').split(',')[1:]
 
+    def compute(self):
+        return self.analyze()
+
     def __str__(self):
         return "Malware hash: {} \n Features values:\n {}".format(
             self.malware.get_name(), self.analyze())

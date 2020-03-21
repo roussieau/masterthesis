@@ -6,7 +6,7 @@ ADD tools /detector/tools
 ADD src /detector/src
 ADD install.sh install.sh
 RUN apt-get -y update
-RUN apt-get install -y dialog apt-utils git libpq-dev cmake build-essential
+RUN apt-get install -y dialog apt-utils git libpq-dev cmake build-essential vim
 
 # Install python
 RUN apt-get install -y python3 python3-pip
