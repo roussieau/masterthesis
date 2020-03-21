@@ -132,6 +132,20 @@ class Database:
                 VALUES (%s,%s,%s);
             """, (malware_id, feature_num, value))
 
+    def get_number_of_detections(self, date):
+        return self.get_one("""
+            SELECT count(DISTINCT malware_id)
+            FROM detections D, malwares M
+            WHERE M.id = D.malware_id AND M.date = %s; 
+        """, (date,))
+
+    def get_number_of_feature_values(self, date):
+        return self.get_one("""
+            SELECT count(*)
+            FROM feature_values FV, malwares M
+            WHERE M.id = FV.malware_id AND M.date = %s
+        """, (date,))
+
 
     def clear(self):
         self.cursor.execute("DELETE FROM detections WHERE malware_id!=0")
