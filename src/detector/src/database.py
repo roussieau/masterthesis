@@ -3,6 +3,9 @@ import psycopg2
 from datetime import datetime
 import os
 
+NUMBER_OF_DETECTORS = 4 # + CISCO
+NUMBER_OF_FEATURES = 119
+
 class Database: 
     def __init__(self):
         self.db = psycopg2.connect(
@@ -80,23 +83,68 @@ class Database:
                 VALUES (%s,%s,%s);
             """, (malware_id, detector_id, packer))
 
-    def addFeature(self, number, desc):
-        self.cursor.execute("SELECT count(*) FROM features F WHERE \
-        F.num = '{}' AND F.description = '{}';".format(number, desc)) 
-        if self.cursor.fetchone()[0] == 0:
-            self.cursor.execute("INSERT INTO features (num, description) \
-                VALUES ('{}', '{}');".format(str(number), desc))
-            self.db.commit()
+    def have_detections(self, malware_id):
+        result = self.get_one("""
+            SELECT count(DISTINCT detector_id)
+            FROM detections
+            WHERE malware_id = %s
+        """, (malware_id,))
+        return True if result and result >= NUMBER_OF_DETECTORS else False
 
-    def addFeatureValue(self, date, malwareHash, featureNum, value):
-        m_id = self.getMalware(date, malwareHash)
-        f_id = self.getFeature(featureNum)
-        self.cursor.execute("SELECT count(*) FROM feature_values V WHERE \
-        V.malware_id = '{}' AND V.feature_id = '{}' AND V.value = '{}';".format(m_id, f_id, value)) 
-        if self.cursor.fetchone()[0] == 0:
-            self.cursor.execute("INSERT INTO feature_values (malware_id, feature_id, value) \
-                    VALUES (%s,%s,%s);",(m_id, f_id, value))
-            self.db.commit()
+    def have_feature_values(self, malware_id):
+        result = self.get_one("""
+            SELECT count(DISTINCT feature_id)
+            FROM feature_values 
+            WHERE malware_id = %s
+        """, (malware_id,))
+        return True if result and result >= NUMBER_OF_FEATURES else False
+
+    #def add_feature(self, number, desc):
+    #    self.cursor.execute("SELECT count(*) FROM features F WHERE \
+    #    F.num = '{}' AND F.description = '{}';".format(number, desc)) 
+    #    if self.cursor.fetchone()[0] == 0:
+    #        self.cursor.execute("INSERT INTO features (num, description) \
+    #            VALUES ('{}', '{}');".format(str(number), desc))
+    #        self.db.commit()
+
+
+    def get_feature_id(self, feature_num):
+        return self.get_one("""
+            SELECT id
+            FROM features
+            WHERE num = %s
+        """, (feature_num,))
+
+    def add_feature_value(self, malware_id, feature_num, value):
+        feature_id = self.get_feature_id(feature_num)
+        if not feature_id:
+            print("Error in add_feature_value(), feature n {} doesn't exists" \
+                .format(feature_num))
+            return
+        number = self.get_one("""
+            SELECT count(*)
+            FROM feature_values V
+            WHERE V.malware_id = %s AND V.feature_id = %s AND V.value = %s;
+        """, (malware_id, feature_id, value)) 
+        if number == 0:
+            self.insert("""
+                INSERT INTO feature_values (malware_id, feature_id, value)
+                VALUES (%s,%s,%s);
+            """, (malware_id, feature_num, value))
+
+    def get_number_of_detections(self, date):
+        return self.get_one("""
+            SELECT count(DISTINCT malware_id)
+            FROM detections D, malwares M
+            WHERE M.id = D.malware_id AND M.date = %s; 
+        """, (date,))
+
+    def get_number_of_feature_values(self, date):
+        return self.get_one("""
+            SELECT count(*)
+            FROM feature_values FV, malwares M
+            WHERE M.id = FV.malware_id AND M.date = %s
+        """, (date,))
 
 
     def clear(self):

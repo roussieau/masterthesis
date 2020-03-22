@@ -1,27 +1,29 @@
 FROM ubuntu:latest
 
-WORKDIR src
+RUN mkdir /malwares
 
-COPY . .
+WORKDIR detector 
 
+ADD tools /detector/tools
+ADD src /detector/src
+ADD install.sh install.sh
 RUN apt-get -y update
-RUN apt-get install -y dialog apt-utils git libpq-dev
+RUN apt-get install -y dialog apt-utils git libpq-dev cmake build-essential vim unzip
 
-# Installation python
+# Install python
 RUN apt-get install -y python3 python3-pip
 RUN pip3 install pefile psycopg2 progress
 
-# Installation of Manalyze
-RUN apt-get install -y libboost-regex-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libssl-dev build-essential cmake git vim nano wget
-
-WORKDIR manalyze/Manalyze
-RUN cmake .
+WORKDIR /detector/tools/pepac
+RUN git clone https://github.com/avast-tl/pelib.git
+WORKDIR pelib/build
+RUN cmake ..
 RUN make
 
-# Installation peframe
-WORKDIR /src/peframe
-RUN bash install.sh
-RUN pip3 install -r requirements.txt
-RUN python3 setup.py install
+WORKDIR /detector/tools/pefeats/build
+RUN cmake ..
+RUN make
 
-WORKDIR /src
+WORKDIR /detector
+RUN bash install.sh
+WORKDIR /detector/src
