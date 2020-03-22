@@ -3,6 +3,7 @@
 import psycopg2
 import argparse
 import textwrap
+import sys
 from datetime import datetime
 
 import pandas as pd
@@ -109,87 +110,88 @@ def get_feature_values(array, number_of_features):
 
     return final_array
 
-def get_labels():
+
+def get_labels(threshold,selection=None, errors_as_packed=False):
     """ Returns the following tuple (malware_id, isPacked)"""
-    cursor.execute("""
-        WITH packed AS (
-          SELECT t1.date, t1.malware_id, t1.packer, t1.agree, t2.total
-          FROM (SELECT M.date, D.malware_id, D.packer, count(packer) AS agree
-                    FROM detections D, malwares M
-                    WHERE M.id = D.malware_id
-                    GROUP BY M.date, D.malware_id, D.packer) AS t1
-          JOIN(SELECT malware_id, count(DISTINCT detector_id) AS total
-                   FROM detections B
-                   GROUP BY malware_id
-                   HAVING count(DISTINCT detector_id) = 5
-          ) AS t2
-          ON t1.malware_id = t2.malware_id)
-        SELECT malware_id, 1 AS value
-        FROM packed A
-        WHERE NOT EXISTS(
-            SELECT * 
-            FROM packed B 
-            WHERE A.malware_id = B.malware_id  AND B.packer like 'none')
-        UNION 
+    if threshold > 5:
+        print( "Error :Threshold bigger than number of detectors", sys.stderr)
+        sys.exit()
+    selection_size = 5
+    desired_detectors = ""
+    error_extent = ""
+    table = "detections"
+    none_and_error = ""
+    binary_labels = """
         SELECT malware_id, 1 AS value
         FROM packed 
-        WHERE packer LIKE 'none' AND total - agree >= 3
+        WHERE packer LIKE 'none' AND total - agree >= {}
         UNION 
         SELECT malware_id, 0 AS value
         FROM packed 
-        WHERE packer LIKE 'none' AND total - agree < 3
-        ORDER BY malware_id
-        """)
-    return cursor.fetchall()
-
-def get_desired_labels(selection):
-    """ Returns the following tuple (malware_id, isPacked) with only wanted detectors"""
-    cond = ""
-    for f in selection:
-            cond += " '{}',".format(f)
-
-    #build the condition, [:-1] is there to pick up the last ","
-    cond = "(" + cond[:-1] + ") "
-
-    selection_size = len(selection)
-
-    request = "SELECT id FROM detectors WHERE name IN {}".format(cond)
+        WHERE packer LIKE 'none' AND total - agree < {}
+        ORDER BY malware_id;
+        """.format(threshold,threshold)
+    if selection != None:
+        if threshold > len(selection):
+            print( "Error :Threshold bigger than number of detectors", sys.stderr)
+            sys.exit()
+        cond = ""
+        for f in selection:
+                cond += " '{}',".format(f)
+        cond = "(" + cond[:-1] + ") "
+        selection_size = len(selection)
+        request = "SELECT id FROM detectors WHERE name IN {}".format(cond)
+        desired_detectors = """
+            desired_detectors AS ({}),
+            reduced_detections AS (
+                SELECT D.malware_id, D.detector_id, D.packer 
+                FROM detections D, desired_detectors P 
+                WHERE D.detector_id = P.id ORDER BY D.malware_id
+            ),""".format(request)
+        table = "reduced_detections"
+    if not errors_as_packed:
+        error_extent = "OR B.packer LIKE 'error'";
+        none_and_error = """,
+            none_and_error AS (
+            SELECT malware_id, sum(agree) AS the_sum
+            FROM packed
+            WHERE packer LIKE 'error' or packer LIKE 'none'
+            GROUP BY malware_id)
+            """
+        binary_labels = """
+            SELECT malware_id, 0 AS value
+            FROM none_and_error
+            WHERE the_sum >= {} - {}
+            UNION
+            SELECT malware_id, 1 AS value
+            FROM none_and_error
+            WHERE the_sum < {} - {}
+            ORDER BY malware_id;
+            """.format(selection_size, threshold, selection_size, threshold)
 
     cursor.execute("""
-        WITH desired_detectors AS ({}),
-        reduced_detections AS (
-            SELECT D.malware_id, D.detector_id, D.packer 
-            FROM detections D, desired_detectors P 
-            WHERE D.detector_id = P.id ORDER BY D.malware_id
-        ),
+        WITH {}
         packed AS (
-          SELECT t1.date, t1.malware_id, t1.packer, t1.agree, t2.total
-          FROM (SELECT M.date, D.malware_id, D.packer, count(packer) AS agree
-                    FROM reduced_detections D, malwares M
+            SELECT t1.date, t1.malware_id, t1.packer, t1.agree, t2.total
+            FROM (SELECT M.date, D.malware_id, D.packer, count(packer) AS agree
+                    FROM {} D, malwares M
                     WHERE M.id = D.malware_id
                     GROUP BY M.date, D.malware_id, D.packer) AS t1
-          JOIN(SELECT malware_id, count(DISTINCT detector_id) AS total
-                   FROM reduced_detections B
+            JOIN(SELECT malware_id, count(DISTINCT detector_id) AS total
+                   FROM {} B
                    GROUP BY malware_id
                    HAVING count(DISTINCT detector_id) = {}
-          ) AS t2
-          ON t1.malware_id = t2.malware_id)
+            ) AS t2
+            ON t1.malware_id = t2.malware_id){}
         SELECT malware_id, 1 AS value
         FROM packed A
         WHERE NOT EXISTS(
             SELECT * 
             FROM packed B 
-            WHERE A.malware_id = B.malware_id  AND B.packer like 'none')
+            WHERE A.malware_id = B.malware_id  AND (B.packer LIKE 'none' {}))
         UNION 
-        SELECT malware_id, 1 AS value
-        FROM packed 
-        WHERE packer LIKE 'none' AND total - agree >= 1
-        UNION 
-        SELECT malware_id, 0 AS value
-        FROM packed 
-        WHERE packer LIKE 'none' AND total - agree < 1
-        ORDER BY malware_id
-        """.format(request, selection_size))
+        {}
+        """.format(desired_detectors,table,table,selection_size,none_and_error,error_extent,binary_labels))
     return cursor.fetchall()
 
 
@@ -229,6 +231,11 @@ def create_csv(array, labels):
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-t",
+                        "--threshold",
+                        type=int,
+                        help="Threshold for ground truth generation (max. 5)",
+                        default=3)
     parser.add_argument("-l",
                         "--limit", 
                         type=int, 
@@ -253,6 +260,11 @@ def main():
                             Array of wanted detectors with values 
                             in [peframe, peid, manalyze, cisco, detect-it-easy]
                             '''))
+    parser.add_argument("-e",
+                        "--error",
+                        type=bool,
+                        help="Consider detection errors as a packed label",
+                        default=False)
 
     args = parser.parse_args()
     if args.mode == 2 and args.arr is None:
@@ -262,8 +274,7 @@ def main():
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
-    labels = get_labels()
-    #labels = get_desired_labels(args.detector)
+    labels = get_labels(args.threshold,args.detector,args.error)
     final_array = merge_fv_and_label(features, labels)
     create_csv(final_array, name_of_features)
 
