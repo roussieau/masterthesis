@@ -5,6 +5,6 @@ project(pefeats)
 
 set(CMAKE_CXX_STANDARD 14)
 add_executable(pefeats pefeats.cpp)
-include_directories(/pepac/pelib/include)
+include_directories(/detector/tools/pepac/pelib/include)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-target_link_libraries(pefeats CMAKE_CURRENT_LIST_DIR/pelib/libpelib.a)
+target_link_libraries(pefeats /detector/tools/pepac/pelib/build/src/pelib/libpelib.a)
