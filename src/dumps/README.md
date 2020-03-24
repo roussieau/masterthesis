@@ -10,5 +10,5 @@ The following datasets have been created in order to compare the performance of 
 
 - control_8000_false_3.csv : witness sample representative of what could be considered as a "classic" dataset (8000 malwares with a 3/5 threshold, errors considered as non-packed result, all features and all detectors used)
 - default_X.csv : dataset where the threshold has been set to X/5 detectors
-- not_D : dataset where we only considered [all detectors - D] as relevant for the analysis
-- error_as_packed : dataset where an "error" result from a detector is considered as a positive answer
+- not_D.csv : dataset where we only considered [all detectors - D] as relevant for the analysis
+- error_as_packed.csv : dataset where an "error" result from a detector is considered as a positive answer
