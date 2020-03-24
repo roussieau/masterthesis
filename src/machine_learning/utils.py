@@ -217,5 +217,20 @@ def PCA_reduction(csv, kind):
 	    cell_text.append(row)
 	print(tabulate(cell_text, headers = ['Variance','Training acc','Test acc','Components','Time (s)']))
 
-PCA_reduction('../dumps/2020.03.11-17.39.csv','svm')
+def perf(csv, kind):
+	gt = pd.read_csv(csv)
+	cols = [col for col in gt.columns if col not in ['label']]
+	data = gt[cols]
+	target = gt['label']
+
+	clf = algo_picker(kind)
+
+	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	clf.fit(data_train, target_train)
+	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
+	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
+
+if __name__ == '__main__':
+	pass
 
