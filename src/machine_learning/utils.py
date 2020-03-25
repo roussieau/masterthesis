@@ -20,6 +20,7 @@ from sklearn.decomposition import PCA
 
 def algo_picker(name): 
     switcher = { 
+    	"neigh": KNeighborsClassifier(n_neighbors=6,p=1),
     	"gaussian": GaussianNB(),
     	"bernoulli": BernoulliNB(),
         "log": LogisticRegression(C=0.01, max_iter=100,random_state=0), 
@@ -178,7 +179,7 @@ def thomas_parser(csv_path):
 	data = np.array(data_filter)
 	df1 = pd.DataFrame(data=data[0:,0:],
 	                    index=[i for i in range(data.shape[0])],
-	                    columns=['f'+str(i) for i in range(data.shape[1])])
+	                    columns=['f'+str(i+1) for i in range(data.shape[1])])
 	target = np.array(target_filter)
 	df2 = pd.DataFrame({'label':target})
 	df = df1.join(df2)
@@ -226,6 +227,12 @@ def perf(csv, kind):
 	clf = algo_picker(kind)
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	if kind != "tree" and kind != "forest" and kind != "gradient":
+		scaler = Normalizer()
+		scaler.fit(data_train)
+		data_train = scaler.transform(data_train)
+		data_test = scaler.transform(data_test)
 
 	clf.fit(data_train, target_train)
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
