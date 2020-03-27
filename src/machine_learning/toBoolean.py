@@ -86,6 +86,47 @@ def convert_f24(series):
 def convert_f25(series):
     return series.apply(lambda x: 1 if x < 3 else 3)
 
+def convert_f26(series):
+    return series.apply(lambda x: x if x < 5 else 5)
 
+def convert_f27(series):
+    return series.apply(lambda x: x if x < 3 else 3)
 
+def convert_f28(series):
+    return series.apply(lambda x: x if x < 3 else 3)
 
+def convert_f29(series):
+    return series.apply(lambda x: x if x < 5 else 5)
+
+def convert_f30(series):
+    return series.apply(lambda x: x if x < 3 else 3)
+
+def convert_f37(series):
+    def convert(x):
+        if x > 0:
+            return 1
+        elif x < 0:
+            return -1
+        return 0
+    return series.apply(convert)
+
+def convert_f38(series):
+    return series.apply(lambda x: x if x < 3 else 3)
+
+def convert_f39(series):
+    return series.apply(lambda x: x if x < 4 else 4)
+
+def convert_f40(series):
+    def convert(x):
+        if x > 0:
+            return 1
+        elif x < 0:
+            return -1
+        return 0
+    return series.apply(convert)
+
+def convert_f41(series):
+    return 1 if x == 0 else 0
+
+def convert_f43(series):
+    return 1 if x == -1 else 0
