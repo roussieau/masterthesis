@@ -118,15 +118,15 @@ def convert_f39(series):
 
 def convert_f40(series):
     def convert(x):
-        if x > 0:
+        if x > 1:
             return 1
-        elif x < 0:
-            return -1
+        elif x < 1:
+            return 2 
         return 0
     return series.apply(convert)
 
 def convert_f41(series):
-    return 1 if x == 0 else 0
+    return series.apply(lambda x: 1 if x == 0 else 0)
 
 def convert_f43(series):
-    return 1 if x == -1 else 0
+    return series.apply(lambda x: 1 if x == -1 else 0)
