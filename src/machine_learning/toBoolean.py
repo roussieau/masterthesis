@@ -2,17 +2,25 @@ import pandas as pd
 
 class BufferDF:
     
-    def __init__():
+    def __init__(self):
         self.df = pd.DataFrame()
 
-    def add(feature_name, value):
-        if isinstance(value, pd.core.series.Series):
-            self.df[feature_name] = value
-        elif isinstance(value, pd.core.frame.DataFrame):
+    def get_df(self):
+        return self.df
 
+    def add(self, feature_name, value):
+        if value is None:
+            return #Do nothing
+
+        already_boolean = len(value.value_counts()) == 2
+        if already_boolean:
+            self.df[feature_name] = value
         else:
-            print("Error: {} hasn't a series or a dataframe in argument"\
-                    .format(feature_name))
+            dum = pd.get_dummies(value, prefix=feature_name, drop_first=True)
+            self.df = pd.concat([self.df, dum], axis=1)
+
+def do_nothing(series):
+    return series
 
 def convert_f9(series):
     return series.apply(lambda x: 0 if x == 0 else 1)
@@ -60,6 +68,8 @@ def convert_f16(series):
         return 0
     return series.apply(convert)
 
+def convert_f17(series):
+    return None
 
 def convert_f18(series):
     return series.apply(lambda x: 1 if x == 0 else 0)
@@ -146,3 +156,62 @@ def convert_f41(series):
 
 def convert_f43(series):
     return series.apply(lambda x: 1 if x == -1 else 0)
+
+
+
+functions = [
+        None, # To start the list at index 1
+        do_nothing, #f1
+        do_nothing, #f2
+        do_nothing, #f3
+        do_nothing, #f4
+        do_nothing, #f5
+        do_nothing, #f6
+        do_nothing, #f7
+        do_nothing, #f8
+        convert_f9,
+        convert_f10,
+        convert_f11,
+        convert_f12,
+        convert_f13,
+        convert_f14,
+        convert_f15,
+        convert_f16,
+        convert_f17,
+        convert_f18,
+        convert_f19,
+        convert_f20,
+        convert_f21,
+        convert_f22,
+        convert_f23,
+        convert_f24,
+        convert_f25,
+        convert_f26,
+        convert_f27,
+        convert_f28,
+        convert_f29,
+        convert_f30,
+        do_nothing, #f31
+        do_nothing, #f32
+        do_nothing, #f33
+        do_nothing, #f34
+        do_nothing, #f35
+        do_nothing, #f36
+        convert_f37,
+        convert_f38,
+        convert_f39,
+        convert_f40,
+        convert_f41,
+        do_nothing,
+        convert_f43,
+]
+
+def convert(df):
+    buff = BufferDF()
+    for i in range(1,43):
+        feature = 'f{}'.format(i)
+        print("for {} we use {}".format(feature, functions[i]))
+        buff.add(feature, functions[i](df[feature]))
+
+    print(buff.get_df())
+
