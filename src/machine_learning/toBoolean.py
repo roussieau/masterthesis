@@ -1,3 +1,19 @@
+import pandas as pd
+
+class BufferDF:
+    
+    def __init__():
+        self.df = pd.DataFrame()
+
+    def add(feature_name, value):
+        if isinstance(value, pd.core.series.Series):
+            self.df[feature_name] = value
+        elif isinstance(value, pd.core.frame.DataFrame):
+
+        else:
+            print("Error: {} hasn't a series or a dataframe in argument"\
+                    .format(feature_name))
+
 def convert_f9(series):
     return series.apply(lambda x: 0 if x == 0 else 1)
 
