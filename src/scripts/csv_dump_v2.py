@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pandas as pd
 
-def query_feature_values(mode, limit, selection=None):
+def query_feature_values(mode, selection=None):
     """ Query feature values to remote database"""
    
     cond = ""
@@ -31,18 +31,15 @@ def query_feature_values(mode, limit, selection=None):
         #build the condition, [:-1] is there to pick up the last ","
         cond = "AND F.num IN (" + cond[:-1] + ") "
 
-    # number of total features should be limit * wanted features (mode 0 is 119, mode 1 
-    # is number of boolean features and mode 2 is length of selection array) """
-    limit = " LIMIT {}".format(limit*multiplicator) if limit != None else ""
     print("Request feature values")
     cursor.execute("""
-        SELECT FV.malware_id, F.num, FV.value
-        FROM features F, feature_values FV
+        SELECT FV.malware_id, F.num, FV.value, M.date
+        FROM features F, feature_values FV, malwares M
         WHERE FV.feature_id = F.id 
+        AND FV.malware_id = M.id
         {}
-        ORDER BY FV.malware_id, F.num
-        {};
-    """.format(cond, limit))
+        ORDER BY FV.malware_id, F.num;
+    """.format(cond))
     features = cursor.fetchall()
     return features
 
@@ -66,6 +63,7 @@ def get_boolean_id():
 
 def get_feature_labels(array):
     """ Returns the different features for the first malware"""
+    print("feature_labels \n")
     first_malware = array[0][0]
     feature_labels = []
     for row in array:
@@ -77,9 +75,9 @@ def get_feature_labels(array):
 
 def get_feature_values(array, number_of_features):
     """Returns a 2D array with the following structure :
-       [[malware_1, feature_1, feature_2, feature3, ...],
+       [[date, malware_1, feature_1, feature_2, feature3, ...],
         ...
-        [malware_14, feature1, feature_2, feature_3, ...]]"""
+        [date, malware_14, feature1, feature_2, feature_3, ...]]"""
     current_id = -1
     tmp_features = []
     malwares_error = []
@@ -87,22 +85,22 @@ def get_feature_values(array, number_of_features):
 
     for row in array:
         malware_id = row[0]
+        date = row[3]
         feature_value = row[2]
 
         if current_id != malware_id:
 
-            if len(tmp_features) == number_of_features + 1: 
+            if len(tmp_features) == number_of_features + 2: 
                 final_array.append(tmp_features)
             else:
                 malwares_error.append(malware_id)
 
             tmp_features = []
+            tmp_features.append(date)
             tmp_features.append(malware_id)
             current_id = malware_id
 
         tmp_features.append(feature_value)
-
-
 
     print("Number of malwares: {}".format(len(final_array)))
     print("There is some trouble with {} malware(s) " \
@@ -203,29 +201,35 @@ def merge_fv_and_label(feature_values, labels):
 
     while(fv_index < len(feature_values) and label_index < len(labels)):
         # Corresponding malware id
-        if feature_values[fv_index][0] == labels[label_index][0]:
-            new_row = feature_values[fv_index][1:] + [labels[label_index][1]]
+        if feature_values[fv_index][1] == labels[label_index][0]:
+            new_row = [feature_values[fv_index][0]] + feature_values[fv_index][2:] + [labels[label_index][1]]
             global_array.append(new_row)
             fv_index += 1
             label_index += 1
-        elif feature_values[fv_index][0] < labels[label_index][0]:
+        elif feature_values[fv_index][1] < labels[label_index][0]:
             fv_index += 1
         else:
             label_index += 1
 
-    print("{:.2%} of feature values in the final" \
+    '''print("{:.2%} of feature values in the final" \
         .format(len(global_array)/len(feature_values)))
     print("{:.2%} of labels in the final" \
-        .format(len(global_array)/len(labels)))
+        .format(len(global_array)/len(labels)))'''
 
     return global_array
 
-def create_csv(array, labels):
+def create_csv(array, labels, start, limit):
     now = datetime.now()
     timestamp = now.strftime("%Y.%m.%d-%H.%M")
     df = pd.DataFrame(data=array,
                       index=[ i for i in range(len(array)) ],
-                      columns=[ 'f'+str(i) for i in labels ] + ['label'])
+                      columns=['date'] + [ 'f'+str(i) for i in labels ] + ['label'])
+    df.sort_values(by='date', ascending=1, inplace=True)
+    indexNames = df[df['date'] < start].index
+    df.drop(indexNames, inplace=True)
+    df.drop('date', 1, inplace=True)
+    limit = df.shape[0] if limit > df.shape[0] else limit
+    df = df[:limit]
     df.to_csv('../dumps/'+timestamp+'.csv', index=False)
     print("File {}.csv created".format(timestamp))
 
@@ -265,18 +269,24 @@ def main():
                         type=bool,
                         help="Consider detection errors as a packed label",
                         default=False)
+    parser.add_argument("-s",
+                        "--start", 
+                        help=textwrap.dedent('''\
+                            Month from which malwares should be picked up according
+                            to the following format : 20191231
+                            '''),
+                        default="20190615")
 
     args = parser.parse_args()
     if args.mode == 2 and args.arr is None:
         parser.error("mode 2 requires array of features, -h for help")
-
-    result_of_db = query_feature_values(args.mode, args.limit, args.arr)
+    result_of_db = query_feature_values(args.mode, args.arr)
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
     labels = get_labels(args.threshold,args.detector,args.error)
     final_array = merge_fv_and_label(features, labels)
-    create_csv(final_array, name_of_features)
+    create_csv(final_array, name_of_features, args.start, args.limit)
 
 db = psycopg2.connect(
     database="thesis",
