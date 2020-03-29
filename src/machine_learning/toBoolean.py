@@ -18,6 +18,7 @@ class BufferDF:
             dum = pd.get_dummies(value, prefix=feature_name, drop_first=True)
             self.df = pd.concat([self.df, dum], axis=1)
 
+
 def do_nothing(series):
     return series
 
@@ -27,8 +28,8 @@ def delete(series):
 def check_zero(series):
     return series.apply(lambda x: 1 if x == 0 else 0)
 
-def convert_f10(series):
-    return series.apply(lambda x: 1 if x == 4_194_304 else 0)
+def check_negative(series):
+    return series.apply(lambda x: 1 if x == -1 else 0)
 
 def check_ratio(series):
     def convert(x):
@@ -38,6 +39,9 @@ def check_ratio(series):
             return 2 
         return 0
     return series.apply(convert)
+
+def convert_f10(series):
+    return series.apply(lambda x: 1 if x == 4_194_304 else 0)
 
 def convert_f11(series):
     def convert(x):
@@ -133,9 +137,6 @@ def convert_f38(series):
 
 def convert_f39(series):
     return series.apply(lambda x: x if x < 4 else 4)
-
-def check_negative(series):
-    return series.apply(lambda x: 1 if x == -1 else 0)
 
 
 functions = [
