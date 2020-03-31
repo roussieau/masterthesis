@@ -4,6 +4,7 @@ import csv
 import time
 from tabulate import tabulate
 import matplotlib.pyplot as plt
+from joblib import dump, load
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectFromModel
 
@@ -16,6 +17,8 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler, Normalizer
 from sklearn.decomposition import PCA
+
+from toBoolean import convert
 
 
 def algo_picker(name): 
@@ -218,10 +221,12 @@ def PCA_reduction(csv, kind):
 	    cell_text.append(row)
 	print(tabulate(cell_text, headers = ['Variance','Training acc','Test acc','Components','Time (s)']))
 
-def perf(csv, kind):
+def perf(csv, kind, only_b):
 	gt = pd.read_csv(csv)
 	cols = [col for col in gt.columns if col not in ['label']]
 	data = gt[cols]
+	if only_b:
+		data = convert(data)
 	target = gt['label']
 
 	clf = algo_picker(kind)
@@ -237,6 +242,47 @@ def perf(csv, kind):
 	clf.fit(data_train, target_train)
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
+
+def time_comparison(kind):
+	clf = algo_picker(kind)
+	file_path = "default_20190615_"
+	csv_path = "../dumps/"
+	snap_path = "snapshots/"
+	csv = ["6000","14000","21000","31000"]
+	cell_text = []
+	for i in csv:
+		row = []
+		row.append(i)
+		row.append(float(i)/7000)
+
+		gt = pd.read_csv(csv_path+file_path+i+".csv")
+		cols = [col for col in gt.columns if col not in ['label']]
+		data_train = gt[cols]
+		target_train = gt['label']
+
+		if kind != "tree" and kind != "forest" and kind != "gradient":
+			scaler = Normalizer()
+			scaler.fit(data_train)
+			data_train = scaler.transform(data_train)
+
+		clf.fit(data_train, target_train)
+
+		dump(clf,"snapshots/tree_default_20190615_6000.joblib")
+		dump(clf,snap_path+kind+"_"+file_path+i+".joblib")
+		clf = load(snap_path+kind+"_"+file_path+i+".joblib")
+
+		gt = pd.read_csv("../dumps/default_20190808_1000.csv")
+		cols = [col for col in gt.columns if col not in ['label']]
+		data_test = gt[cols]
+		target_test = gt['label']
+
+		if kind != "tree" and kind != "forest" and kind != "gradient":
+			data_test = scaler.transform(data_test)
+
+		row.append(clf.score(data_train, target_train))
+		row.append(clf.score(data_test, target_test))
+		cell_text.append(row)
+	print(tabulate(cell_text, headers = ['# malwares in training set','Approx. period in weeks','Training acc','Test acc']))
 
 if __name__ == '__main__':
 	pass
