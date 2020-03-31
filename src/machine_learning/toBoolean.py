@@ -192,10 +192,17 @@ def convert(df):
     buff = BufferDF()
     for i in range(1,46):
         feature = 'f{}'.format(i)
-        print("for {} we use {}".format(feature, functions[i]))
+        #print("for {} we use {}".format(feature, functions[i]))
         buff.add(feature, functions[i](df[feature]))
+
+    for i in range(46,118):
+        feature = 'f{}'.format(i)
+        #print("for {} we use {}".format(feature, check_zero))
+        buff.add(feature, check_zero(df[feature]))
 
     # We delete features 46 to 117
     buff.add('f118', df['f118'])
+
+    buff.add('f119', check_zero(df['f119']))
 
     return buff.get_df()
