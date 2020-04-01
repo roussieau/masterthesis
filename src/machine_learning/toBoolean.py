@@ -115,7 +115,7 @@ def convert_f24(series):
     return series.apply(lambda x: 1 if x == 1 else 0)
 
 def convert_f25(series):
-    return series.apply(lambda x: 1 if x < 3 else 3)
+    return series.apply(lambda x: 1 if x < 3 else 0)
 
 def convert_f26(series):
     return series.apply(lambda x: x if x < 5 else 5)
