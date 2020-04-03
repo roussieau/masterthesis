@@ -2,11 +2,12 @@
 
 import subprocess
 from database import Database
+import sys
 
 THRESHOLD_MALWARE = 900
 THRESHOLD_FEATURE = THRESHOLD_MALWARE * 119
 
-db = Database()
+#db = Database()
 
 def convert_date(zipped_date):
     year, month, day = zipped_date.split(".")[0].split("-")
@@ -36,6 +37,7 @@ def scan(date, f):
     
 
 def main():
+    starting_date = 0 if len(sys.argv) == 1 else sys.argv[1]
     try:
         list_of_files = subprocess.check_output(["ssh", "stud@shadow1.info.ucl.ac.be", "-i", "/shad",
             "ls", "malware"]).decode("utf-8").split("\n")
@@ -44,7 +46,7 @@ def main():
 
     folders = list(gen_list(list_of_files))
     for (date, f) in folders:
-        if need_to_scan(date):
+        if date > starting_date and need_to_scan(date):
             scan(date, f)
 
 if __name__ == '__main__':
