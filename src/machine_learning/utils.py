@@ -271,11 +271,11 @@ def perf(csv, kind, only_b):
 		print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
 
-def time_comparison(kind):
+def time_comparison(kind, path_to_parent):
 	clf = algo_picker(kind)
 	file_path = "_20190615_"
-	csv_path = "../dumps/"
-	snap_path = "snapshots/"
+	csv_path = path_to_parent+"../dumps/"
+	snap_path = path_to_parent+"snapshots/"
 	size = ["6000","14000","21000","31000"]
 	thresholds = ["1","2","default","4","5"]
 	for t in thresholds:
@@ -303,7 +303,7 @@ def time_comparison(kind):
 			dump(clf,snap_file)
 			clf = load(snap_file)
 
-			gt = pd.read_csv("../dumps/"+t+"_20190808_1000.csv")
+			gt = pd.read_csv(csv_path+t+"_20190808_1000.csv")
 			cols = [col for col in gt.columns if col not in ['label']]
 			data_test = gt[cols]
 			target_test = gt['label']
