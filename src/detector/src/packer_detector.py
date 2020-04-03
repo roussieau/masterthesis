@@ -21,10 +21,14 @@ class PackerDetector:
             print("{}: {}".format(self.get_detector_name(), results))
         if save:
             if type(results) is list:
-                for result in results: 
-                    db.add_analysis(self.malware.get_id(), self.get_id(), result)
-            else: 
-                db.add_analysis(self.malware.get_id(), self.get_id(), results)
+                for result in results:
+                    db.add_analysis(self.malware.get_id(),
+                                    self.get_id(),
+                                    result.lower())
+            else:
+                db.add_analysis(self.malware.get_id(),
+                                self.get_id(),
+                                results.lower())
 
     def __str__(self):
         result = self.analyze()
