@@ -10,16 +10,18 @@ db = psycopg2.connect(
         )
 cursor = db.cursor()
 
-def updatePacker(old, new):
+
+def update_packer(old, new):
     cursor.execute("""
             UPDATE detections
-            SET packer = %s
+            SET packer = %s,
+                clean = True
             WHERE packer = %s
         """, (new, old))
     db.commit()
 
 
-def getChanges():
+def get_changes():
     cursor.execute("""
         SELECT old, new
         FROM changes
@@ -28,8 +30,22 @@ def getChanges():
     return cursor.fetchall()
 
 
-changes = getChanges()
+def remove_empty_packers():
+    cursor.execute("""
+        UPDATE detections
+        SET packer = 'none',
+            clean = True
+        WHERE packer is NULL
+    """)
+    db.commit()
 
-for (old, new) in changes:
-    print("Rename {} -> {}".format(old, new))
-    updatePacker(old, new)
+
+if __name__ == '__main__':
+    changes = get_changes()
+
+    for (old, new) in changes:
+        print("Rename {} -> {}".format(old, new))
+        update_packer(old, new)
+
+    print("Convert empty detections to none")
+    remove_empty_packers()
