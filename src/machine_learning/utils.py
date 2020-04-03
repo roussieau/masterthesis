@@ -222,11 +222,13 @@ def PCA_reduction(csv, kind):
 	print(tabulate(cell_text, headers = ['Variance','Training acc','Test acc','Components','Time (s)']))
 
 def perf(csv, kind, only_b):
+	second_test = False
 	gt = pd.read_csv(csv)
 	cols = [col for col in gt.columns if col not in ['label']]
 	data = gt[cols]
 	if only_b:
-		data = convert(data)
+		data = convert(data, False)
+		second_test = True
 	target = gt['label']
 
 	clf = algo_picker(kind)
@@ -240,49 +242,79 @@ def perf(csv, kind, only_b):
 		data_test = scaler.transform(data_test)
 
 	clf.fit(data_train, target_train)
+	print("Most important : \n")
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
-def time_comparison(kind):
-	clf = algo_picker(kind)
-	file_path = "default_20190615_"
-	csv_path = "../dumps/"
-	snap_path = "snapshots/"
-	csv = ["6000","14000","21000","31000"]
-	cell_text = []
-	for i in csv:
-		row = []
-		row.append(i)
-		row.append(float(i)/7000)
-
-		gt = pd.read_csv(csv_path+file_path+i+".csv")
+	if second_test:
+		gt = pd.read_csv(csv)
 		cols = [col for col in gt.columns if col not in ['label']]
-		data_train = gt[cols]
-		target_train = gt['label']
+		data = gt[cols]
+		if only_b:
+			data = convert(data, True)
+		target = gt['label']
+
+		clf = algo_picker(kind)
+
+		data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
 		if kind != "tree" and kind != "forest" and kind != "gradient":
 			scaler = Normalizer()
 			scaler.fit(data_train)
 			data_train = scaler.transform(data_train)
-
-		clf.fit(data_train, target_train)
-
-		dump(clf,"snapshots/tree_default_20190615_6000.joblib")
-		dump(clf,snap_path+kind+"_"+file_path+i+".joblib")
-		clf = load(snap_path+kind+"_"+file_path+i+".joblib")
-
-		gt = pd.read_csv("../dumps/default_20190808_1000.csv")
-		cols = [col for col in gt.columns if col not in ['label']]
-		data_test = gt[cols]
-		target_test = gt['label']
-
-		if kind != "tree" and kind != "forest" and kind != "gradient":
 			data_test = scaler.transform(data_test)
 
-		row.append(clf.score(data_train, target_train))
-		row.append(clf.score(data_test, target_test))
-		cell_text.append(row)
-	print(tabulate(cell_text, headers = ['# malwares in training set','Approx. period in weeks','Training acc','Test acc']))
+		clf.fit(data_train, target_train)
+		print("---------------\n")
+		print("All features : \n")
+		print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
+		print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
+
+
+def time_comparison(kind):
+	clf = algo_picker(kind)
+	file_path = "_20190615_"
+	csv_path = "../dumps/"
+	snap_path = "snapshots/"
+	size = ["6000","14000","21000","31000"]
+	thresholds = ["1","2","default","4","5"]
+	for t in thresholds:
+		print("Acceptation threshold : %s/5 \n" % t)
+		cell_text = []
+		for i in size:
+			row = []
+			row.append(i)
+			row.append(float(i)/7000)
+
+			csv_file = csv_path+t+file_path+i+".csv"
+			gt = pd.read_csv(csv_file)
+			cols = [col for col in gt.columns if col not in ['label']]
+			data_train = gt[cols]
+			target_train = gt['label']
+
+			if kind != "tree" and kind != "forest" and kind != "gradient":
+				scaler = Normalizer()
+				scaler.fit(data_train)
+				data_train = scaler.transform(data_train)
+
+			clf.fit(data_train, target_train)
+
+			snap_file = snap_path+kind+"_"+t+file_path+i+".joblib"
+			dump(clf,snap_file)
+			clf = load(snap_file)
+
+			gt = pd.read_csv("../dumps/"+t+"_20190808_1000.csv")
+			cols = [col for col in gt.columns if col not in ['label']]
+			data_test = gt[cols]
+			target_test = gt['label']
+
+			if kind != "tree" and kind != "forest" and kind != "gradient":
+				data_test = scaler.transform(data_test)
+
+			row.append(clf.score(data_train, target_train))
+			row.append(clf.score(data_test, target_test))
+			cell_text.append(row)
+		print(tabulate(cell_text, headers = ['# malwares in training set','Approx. period in weeks','Training acc','Test acc']))
 
 if __name__ == '__main__':
 	pass
