@@ -228,7 +228,8 @@ def create_csv(array, labels, start, limit):
     indexNames = df[df['date'] < start].index
     df.drop(indexNames, inplace=True)
     df.drop('date', 1, inplace=True)
-    limit = df.shape[0] if limit > df.shape[0] else limit
+    if limit == None or limit > df.shape[0]:
+        limit = df.shape[0]
     df = df[:limit]
     df.to_csv('../dumps/'+timestamp+'.csv', index=False)
     print("File {}.csv created".format(timestamp))
