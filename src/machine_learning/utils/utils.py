@@ -18,7 +18,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler, Normalizer
 from sklearn.decomposition import PCA
 
-from toBoolean import convert
+from utils.toBoolean import convert
 
 
 def algo_picker(name): 
