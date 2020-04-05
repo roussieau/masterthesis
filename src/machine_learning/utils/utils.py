@@ -280,10 +280,10 @@ def perf(csv, kind, only_b):
 def time_comparison(kind, path_to_parent):
 	clf = algo_picker(kind)
 	file_path = "_20190615_"
-	csv_path = path_to_parent+"../dumps/"
+	csv_path = path_to_parent+"../dumps/time_analysis/threshold_"
 	snap_path = "snapshots/"
 	size = ["6000","14000","21000","31000"]
-	thresholds = ["1","2","default","4","5"]
+	thresholds = ["1","2","3","4","5"]
 	for t in thresholds:
 		print("Acceptation threshold : %s/5 \n" % t)
 		cell_text = []
@@ -292,7 +292,9 @@ def time_comparison(kind, path_to_parent):
 			row.append(i)
 			row.append(float(i)/7000)
 
-			csv_file = csv_path+t+file_path+i+".csv"
+			folder = csv_path+t+"/"
+			file = t+file_path+i+".csv"
+			csv_file = folder+file
 			gt = pd.read_csv(csv_file)
 			cols = [col for col in gt.columns if col not in ['label']]
 			data_train = gt[cols]
@@ -305,7 +307,6 @@ def time_comparison(kind, path_to_parent):
 					scaler = Normalizer()
 				scaler.fit(data_train)
 				data_train = scaler.transform(data_train)
-				data_test = scaler.transform(data_test)
 
 			clf.fit(data_train, target_train)
 
@@ -313,7 +314,7 @@ def time_comparison(kind, path_to_parent):
 			dump(clf,snap_file)
 			clf = load(snap_file)
 
-			gt = pd.read_csv(csv_path+t+"_20190808_1000.csv")
+			gt = pd.read_csv(folder+t+"_20190808_1000.csv")
 			cols = [col for col in gt.columns if col not in ['label']]
 			data_test = gt[cols]
 			target_test = gt['label']
