@@ -275,7 +275,7 @@ def time_comparison(kind, path_to_parent):
 	clf = algo_picker(kind)
 	file_path = "_20190615_"
 	csv_path = path_to_parent+"../dumps/"
-	snap_path = path_to_parent+"snapshots/"
+	snap_path = "snapshots/"
 	size = ["6000","14000","21000","31000"]
 	thresholds = ["1","2","default","4","5"]
 	for t in thresholds:
