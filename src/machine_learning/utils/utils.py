@@ -236,7 +236,10 @@ def perf(csv, kind, only_b):
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
 	if kind != "tree" and kind != "forest" and kind != "gradient":
-		scaler = Normalizer()
+		if kind == "gaussian" or kind == "bernoulli":
+			scaler = StandardScaler()
+		else:
+			scaler = Normalizer()
 		scaler.fit(data_train)
 		data_train = scaler.transform(data_train)
 		data_test = scaler.transform(data_test)
@@ -259,7 +262,10 @@ def perf(csv, kind, only_b):
 		data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
 		if kind != "tree" and kind != "forest" and kind != "gradient":
-			scaler = Normalizer()
+			if kind == "gaussian" or kind == "bernoulli":
+				scaler = StandardScaler()
+			else:
+				scaler = Normalizer()
 			scaler.fit(data_train)
 			data_train = scaler.transform(data_train)
 			data_test = scaler.transform(data_test)
@@ -293,9 +299,13 @@ def time_comparison(kind, path_to_parent):
 			target_train = gt['label']
 
 			if kind != "tree" and kind != "forest" and kind != "gradient":
-				scaler = Normalizer()
+				if kind == "gaussian" or kind == "bernoulli":
+					scaler = StandardScaler()
+				else:
+					scaler = Normalizer()
 				scaler.fit(data_train)
 				data_train = scaler.transform(data_train)
+				data_test = scaler.transform(data_test)
 
 			clf.fit(data_train, target_train)
 
