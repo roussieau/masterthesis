@@ -188,7 +188,7 @@ functions = [
         check_negative,#f45
 ]
 
-def convert(df,all_features):
+def convert(df, all_features=False):
     buff = BufferDF()
     for i in range(1,46):
         feature = 'f{}'.format(i)
