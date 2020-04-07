@@ -28,7 +28,7 @@ def algo_picker(name):
     	"bernoulli": BernoulliNB(),
         "log": LogisticRegression(C=0.01, max_iter=100,random_state=0), 
         "svc": LinearSVC(C=0.01, max_iter=10000,random_state=0), 
-        "tree": DecisionTreeClassifier(max_depth=4,min_samples_split=0.1,min_samples_leaf=10,random_state=0),
+        "tree": DecisionTreeClassifier(max_depth=7,min_samples_split=10,min_samples_leaf=7,random_state=0),
         "forest": RandomForestClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
         "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
         "svm": SVC(kernel='poly',C=0.1,gamma=100,degree=3),
@@ -45,7 +45,7 @@ The idea is the following:
 	- Starting from step 2, we do the intersection between K-set and the K best features from previous iteration (called Z-set)
 	- At each following step, we do a new intersection and replace Z-set by the intersect between Z-set and K-set
 '''
-def iterative_process(csv, padd, kind):
+def iterative_process(csv, threshold, kind):
 	current_set = []
 	best_set = []
 
@@ -54,7 +54,8 @@ def iterative_process(csv, padd, kind):
 	raw_data = gt[cols]
 	raw_target = gt['label']
 
-	iterations = np.arange(padd,1.0,padd)
+	# We increase the test size by padd of 15%
+	iterations = np.arange(0.15, 1.0, 0.15)
 	
 	clf = algo_picker(kind)
 
@@ -64,17 +65,14 @@ def iterative_process(csv, padd, kind):
 		clf.fit(data_train, target_train)
 
 		#Select K best features
-		model = SelectFromModel(clf, prefit=True)
+		model = SelectFromModel(clf, threshold=threshold, prefit=True)
 		train_new = model.transform(data_train)
 		mask = model.get_support()
 		current_set = data_train.columns[mask]
 
 		#Intersection of two last subsets with the best features
-		if t_size != padd :
-			print([value for value in best_set if value in current_set])
+		if t_size != 0.15 :
 			best_set = [value for value in current_set if value in best_set]
-			print(best_set)
-			print("--------")
 		else :
 			best_set = current_set
 
@@ -88,7 +86,7 @@ Three different plots are displayed :
 	- Performances when only keeping the K best features
 	- Performances when applying the iterative process described in iterative_process()
 '''
-def feature_selection(csv, padd, kind):
+def feature_selection(csv, kind, threshold=0.005):
 	cell_text = []
 
 	clf = algo_picker(kind)
@@ -116,7 +114,7 @@ def feature_selection(csv, padd, kind):
 	# Performances with K best features selection
 	start = perf_counter()
 	row = []
-	model = SelectFromModel(clf, prefit=True)
+	model = SelectFromModel(clf, threshold=threshold, prefit=True)
 	train_new = model.transform(data_train)
 	mask = model.get_support()
 	new_current_set = data_train.columns[mask]
@@ -138,7 +136,7 @@ def feature_selection(csv, padd, kind):
 	# Performances with features selected from the iterative process
 	start = perf_counter()
 	row = []
-	best_set = iterative_process(csv, 0.15, kind)
+	best_set = iterative_process(csv, threshold, kind)
 
 	gt = pd.read_csv(csv)
 	data = gt[best_set]
@@ -155,6 +153,13 @@ def feature_selection(csv, padd, kind):
 	row.append(end - start)
 
 	print(tabulate(cell_text, headers = ['Execution','Features selected','Training set acc','Test acc','Time (s)']))
+
+# Launch the feature selection process for different feature importances
+def fs_driver(csv, kind, thresholds):
+	for i in thresholds:
+		print("Threshold : %f" % i)
+		feature_selection(csv, kind, i)
+		print("\n")
 
 def thomas_parser(csv_path):
 	data = []
