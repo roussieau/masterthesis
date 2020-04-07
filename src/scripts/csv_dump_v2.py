@@ -3,7 +3,6 @@
 import psycopg2
 import argparse
 import textwrap
-import sys
 from datetime import datetime
 from time import time
 
@@ -159,22 +158,23 @@ def cleaned_labels(labels):
             yield (m_id, error, none, other, packer, number)
 
 
-def get_labels(threshold):
-    assert threshold >= 3
+def get_labels(threshold, error_as_packed=False):
     buff = []
     data = gen_labels_info()
     for (m_id, error, none, other, packer, number) in cleaned_labels(data):
-        if none >= threshold:
-            buff.append((m_id, 0))
-        elif other >= threshold:
+        if other >= threshold:
             buff.append((m_id, 1))
+        elif error_as_packed and other + error >= threshold:
+            buff.append((m_id, 1))
+        else:
+            buff.append((m_id, 0))
     return buff
 
 
 def merge_fv_and_label(feature_values, labels):
     """Merge feature values with corresponding label"""
     fv_index = 0
-    label_index = 0 
+    label_index = 0
     global_array = []
 
     while(fv_index < len(feature_values) and label_index < len(labels)):
@@ -191,21 +191,23 @@ def merge_fv_and_label(feature_values, labels):
 
     return global_array
 
+
 def create_csv(array, labels, start, limit):
     now = datetime.now()
     timestamp = now.strftime("%Y.%m.%d-%H.%M")
     df = pd.DataFrame(data=array,
-                      index=[ i for i in range(len(array)) ],
-                      columns=['date'] + [ 'f'+str(i) for i in labels ] + ['label'])
+                      index=[i for i in range(len(array))],
+                      columns=['date'] + ['f'+str(i) for i in labels] + ['label'])
     df.sort_values(by='date', ascending=1, inplace=True)
     indexNames = df[df['date'] < start].index
     df.drop(indexNames, inplace=True)
     df.drop('date', 1, inplace=True)
-    if limit == None or limit > df.shape[0]:
+    if limit is None or limit > df.shape[0]:
         limit = df.shape[0]
     df = df[:limit]
     df.to_csv('../dumps/'+timestamp+'.csv', index=False)
     print("File {}.csv created".format(timestamp))
+
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
@@ -215,49 +217,44 @@ def main():
                         help="Threshold for ground truth generation (max. 5)",
                         default=3)
     parser.add_argument("-l",
-                        "--limit", 
-                        type=int, 
-                        help="Limit number of malwares")
-    parser.add_argument("-m",
-                        "--mode",
+                        "--limit",
                         type=int,
-                        help=textwrap.dedent('''\
-                                0 (default): all features
-                                1: only boolean features
-                                2: features from parameter array
-                                 '''),
-                        default=0)
+                        help="Limit number of malwares")
+    parser.add_argument("--boolean",
+                        action='store_true',
+                        help="Get only boolean feature")
     parser.add_argument("-a", "--arr",
                         nargs="+",
                         help="Array of wanted features e.g. 46 87 101 119")
     parser.add_argument("-d", "--detector",
                         nargs="+",
                         help=textwrap.dedent('''\
-                            Array of wanted detectors with values 
+                            Array of wanted detectors with values
                             in [peframe, peid, manalyze, cisco, detect-it-easy]
                             '''))
     parser.add_argument("-e", "--error",
-                        type=bool,
-                        help="Consider detection errors as a packed label",
-                        default=False)
+                        action='store_true',
+                        help="Consider detection errors as a packed label")
     parser.add_argument("-s", "--start",
                         help=textwrap.dedent('''\
-                            Month from which malwares should be picked up according
-                            to the following format : 20191231
+                            Month from which malwares should be picked up
+                            according to the following format : 20191231
                             '''),
                         default="20190615")
 
     args = parser.parse_args()
-    if args.mode == 2 and args.arr is None:
-        parser.error("mode 2 requires array of features, -h for help")
-    result_of_db = query_feature_values(args.mode, args.arr)
+    selected_feature = get_boolean_id() if args.boolean else args.arr
+    result_of_db = query_feature_values(selected_feature)
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
-    labels = get_labels(args.threshold)
+    labels = get_labels(args.threshold, args.error)
     final_array = merge_fv_and_label(features, labels)
     create_csv(final_array, name_of_features, args.start, args.limit)
+
 
 if __name__ == '__main__':
     main()
 
+cursor.close()
+db.close()
