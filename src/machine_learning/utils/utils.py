@@ -20,6 +20,8 @@ from sklearn.decomposition import PCA
 
 from toBoolean import convert
 
+tabulate.WIDE_CHARS_MODE = False
+
 
 def algo_picker(name): 
     switcher = { 
@@ -126,7 +128,7 @@ def feature_selection(csv, kind, threshold=0.005):
 
 	clf.fit(data_train, target_train)
 	row.append("K best features")
-	row.append(new_current_set.values)
+	row.append(parse_list(new_current_set.values))
 	row.append(clf.score(data_train, target_train))
 	row.append(clf.score(data_test, target_test))
 	cell_text.append(row)
@@ -145,7 +147,7 @@ def feature_selection(csv, kind, threshold=0.005):
 
 	clf.fit(data_train, target_train)
 	row.append("Iterative process")
-	row.append(best_set)
+	row.append(parse_list(best_set))
 	row.append(clf.score(data_train, target_train))
 	row.append(clf.score(data_test, target_test))
 	cell_text.append(row)
@@ -331,6 +333,14 @@ def time_comparison(kind, path_to_parent):
 			row.append(clf.score(data_test, target_test))
 			cell_text.append(row)
 		print(tabulate(cell_text, headers = ['# malwares in training set','Approx. period in weeks','Training acc','Test acc']))
+
+def parse_list(features):
+	link = "["
+	for i in range(0,len(features)):
+		if i % 5 == 0 and i != 0:
+			link += "\n"
+		link += "'"+str(features[i])+"',"
+	return link[:-1]+"]"
 
 if __name__ == '__main__':
 	pass
