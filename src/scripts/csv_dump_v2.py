@@ -1,10 +1,11 @@
- #!/usr/bin/env python3 
+#!/usr/bin/env python3
 
 import psycopg2
 import argparse
 import textwrap
 import sys
 from datetime import datetime
+from time import time
 
 import pandas as pd
 
@@ -18,38 +19,32 @@ db = psycopg2.connect(
 
 cursor = db.cursor()
 
+
+def build_cond(features):
+    cond = ""
+    """ Convert the features array into SQL condition """
+    if features is None:
+        return cond
+    for feature in features:
+        cond += " {},".format(feature)
+    return "AND F.num IN (" + cond[:-1] + ") "
+
 def query_feature_values(mode, selection=None):
     """ Query feature values to remote database"""
-    cond = ""
-    multiplicator = 119
-
-     # if boolean features only
-    if mode == 1:
-        multiplicator = 0
-        for f_id in get_boolean_id():
-            multiplicator += 1
-            cond += " {},".format(f_id[0])
-        
-        #build the condition, [:-1] is there to pick up the last ","
-        cond = "AND F.num IN (" + cond[:-1] + ") "
-    elif mode == 2:
-        multiplicator = len(selection)
-        for f in selection:
-            cond += " {},".format(f)
-
-        #build the condition, [:-1] is there to pick up the last ","
-        cond = "AND F.num IN (" + cond[:-1] + ") "
+    cond = build_cond(selection)
 
     print("Request feature values")
+    start = time()
     cursor.execute("""
         SELECT FV.malware_id, F.num, FV.value, M.date
         FROM features F, feature_values FV, malwares M
-        WHERE FV.feature_id = F.id 
+        WHERE FV.feature_id = F.id
         AND FV.malware_id = M.id
         {}
         ORDER BY FV.malware_id, F.num;
     """.format(cond))
     features = cursor.fetchall()
+    print("Fetch features in {:.0f}s".format(time()-start))
     return features
 
 def get_boolean_id():
@@ -58,15 +53,15 @@ def get_boolean_id():
     cursor.execute("""
         SELECT DISTINCT F.num 
         FROM features F, feature_values FV 
-        WHERE FV.feature_id NOT IN 
-            (SELECT DISTINCT A.feature_id 
-             FROM feature_values A
-             WHERE A.value != 0
-                AND A.value != 1)
+        WHERE FV.feature_id NOT IN (
+            SELECT DISTINCT A.feature_id 
+            FROM feature_values A
+            WHERE A.value != 0
+               AND A.value != 1)
             AND FV.feature_id = F.id
         ORDER BY F.num;
     """)
-    boolean_id = cursor.fetchall()
+    boolean_id = [i[0] for i in cursor.fetchall()]
     print("The num of boolean values are : {}".format(boolean_id))
     return boolean_id
 
@@ -82,6 +77,7 @@ def get_feature_labels(array):
             return feature_labels
         feature_labels.append(feature_number)
 
+
 def get_feature_values(array, number_of_features):
     """Returns a 2D array with the following structure :
        [[date, malware_1, feature_1, feature_2, feature3, ...],
@@ -92,14 +88,9 @@ def get_feature_values(array, number_of_features):
     malwares_error = []
     final_array = []
 
-    for row in array:
-        malware_id = row[0]
-        date = row[3]
-        feature_value = row[2]
-
+    for (malware_id, f_num, feature_value, date) in array:
         if current_id != malware_id:
-
-            if len(tmp_features) == number_of_features + 2: 
+            if len(tmp_features) == number_of_features + 2:
                 final_array.append(tmp_features)
             else:
                 malwares_error.append(malware_id)
@@ -111,10 +102,10 @@ def get_feature_values(array, number_of_features):
 
         tmp_features.append(feature_value)
 
-    print("There is some trouble with {} malware(s) " \
-        .format(len(malwares_error)))
-
+    print("There is some trouble with {} malware(s) ".format(
+        len(malwares_error)))
     return final_array
+
 
 def gen_labels_info():
     cursor.execute("""
@@ -153,8 +144,10 @@ def gen_labels_info():
     """)
     return cursor.fetchall()
 
+
 def zero_if_null(value):
-    return value if value else 0 
+    return value if value else 0
+
 
 def cleaned_labels(labels):
     for (m_id, error, none, other, packer, number) in labels:
@@ -164,6 +157,7 @@ def cleaned_labels(labels):
         number = zero_if_null(number)
         if error + none + other == 5:
             yield (m_id, error, none, other, packer, number)
+
 
 def get_labels(threshold):
     assert threshold >= 3
@@ -175,6 +169,7 @@ def get_labels(threshold):
         elif other >= threshold:
             buff.append((m_id, 1))
     return buff
+
 
 def merge_fv_and_label(feature_values, labels):
     """Merge feature values with corresponding label"""
@@ -193,11 +188,6 @@ def merge_fv_and_label(feature_values, labels):
             fv_index += 1
         else:
             label_index += 1
-
-    '''print("{:.2%} of feature values in the final" \
-        .format(len(global_array)/len(feature_values)))
-    print("{:.2%} of labels in the final" \
-        .format(len(global_array)/len(labels)))'''
 
     return global_array
 
@@ -237,24 +227,20 @@ def main():
                                 2: features from parameter array
                                  '''),
                         default=0)
-    parser.add_argument("-a",
-                        "--arr",
-                        nargs="+", 
+    parser.add_argument("-a", "--arr",
+                        nargs="+",
                         help="Array of wanted features e.g. 46 87 101 119")
-    parser.add_argument("-d",
-                        "--detector",
+    parser.add_argument("-d", "--detector",
                         nargs="+",
                         help=textwrap.dedent('''\
                             Array of wanted detectors with values 
                             in [peframe, peid, manalyze, cisco, detect-it-easy]
                             '''))
-    parser.add_argument("-e",
-                        "--error",
+    parser.add_argument("-e", "--error",
                         type=bool,
                         help="Consider detection errors as a packed label",
                         default=False)
-    parser.add_argument("-s",
-                        "--start", 
+    parser.add_argument("-s", "--start",
                         help=textwrap.dedent('''\
                             Month from which malwares should be picked up according
                             to the following format : 20191231
