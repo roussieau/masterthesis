@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import csv
-import time
+from time import perf_counter
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 from joblib import dump, load
@@ -38,16 +38,16 @@ def algo_picker(name):
   
     return switcher.get(name, "nothing") 
 
-
-def feature_selection(csv, padd, kind):
-
-	features_sets = []
-	basic_stats_tr = []
-	basic_stats_te = []
-	transform_stats_tr = []
-	transform_stats_te = []
-	previous_stats_tr = []
-	previous_stats_te = []
+'''
+The idea is the following:
+	- We create different situations where we increase the test set size
+	- At each step, the K best features are selected (K-set)
+	- Starting from step 2, we do the intersection between K-set and the K best features from previous iteration (called Z-set)
+	- At each following step, we do a new intersection and replace Z-set by the intersect between Z-set and K-set
+'''
+def iterative_process(csv, padd, kind):
+	current_set = []
+	best_set = []
 
 	gt = pd.read_csv(csv)
 	cols = [col for col in gt.columns if col not in ['label']]
@@ -55,106 +55,106 @@ def feature_selection(csv, padd, kind):
 	raw_target = gt['label']
 
 	iterations = np.arange(padd,1.0,padd)
-
-	def show_plot(iterations,training,test,title):
-		plt.title(title)		
-		plt.plot(iterations, training, label="training accuracy") 
-		plt.plot(iterations, test, label="test accuracy") 
-		plt.ylabel("Accuracy")
-		plt.xlabel("Training size")
-		plt.legend()
-		plt.show()
-
 	
-	logreg = algo_picker(kind)
-
+	clf = algo_picker(kind)
 
 	for t_size in iterations:
-		print(t_size)
 
-		#Computing initial accuracies without tuning
-		data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = 1-t_size, random_state = 0)
-		if(kind == "log" or kind == "svc"):
-			scaler = Normalizer()
-			scaler.fit(data_train)
-			data_train = scaler.transform(data_train)
-			data_test = scaler.transform(data_test)
-			data_train = pd.DataFrame(data=data_train[0:,0:],
-				                    index=[i for i in range(data_train.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
-			data_test = pd.DataFrame(data=data_test[0:,0:],
-				                    index=[i for i in range(data_test.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
-		print(data_train.shape)
-		logreg.fit(data_train, target_train)
-		basic_stats_tr.append(logreg.score(data_train, target_train))
-		basic_stats_te.append(logreg.score(data_test, target_test))
+		data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = t_size, random_state = 0)
+		clf.fit(data_train, target_train)
 
-		#Select best features
-		model = SelectFromModel(logreg, prefit=True)
+		#Select K best features
+		model = SelectFromModel(clf, prefit=True)
 		train_new = model.transform(data_train)
-		print(train_new.shape)
 		mask = model.get_support()
-		new_current_set = data_train.columns[mask]
-		features_sets.append(new_current_set)
+		current_set = data_train.columns[mask]
 
-		#Creating new dataset with only newly-found best features and computing new accuracies
-		gt = pd.read_csv(csv)
-		data = gt[new_current_set]
-		target = gt['label']
-		data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 1-t_size, random_state = 0)
-		if(kind == "log" or kind == "svc"):
-			scaler = Normalizer()
-			scaler.fit(data_train)
-			data_train = scaler.transform(data_train)
-			data_test = scaler.transform(data_test)
-			data_train = pd.DataFrame(data=data_train[0:,0:],
-				                    index=[i for i in range(data_train.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
-			data_test = pd.DataFrame(data=data_test[0:,0:],
-				                    index=[i for i in range(data_test.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
-		logreg.fit(data_train, target_train)
-		transform_stats_tr.append(logreg.score(data_train, target_train))
-		transform_stats_te.append(logreg.score(data_test, target_test))
-
-		#Creating new dataset with previous best features and computing new accuracies
+		#Intersection of two last subsets with the best features
 		if t_size != padd :
-			gt = pd.read_csv(csv)
-			previous_set = features_sets[-2]
-			data = gt[previous_set]
-			target = gt['label']
-			data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 1-t_size, random_state = 0)
-			if(kind == "log" or kind == "svc"):
-				scaler = Normalizer()
-				scaler.fit(data_train)
-				data_train = scaler.transform(data_train)
-				data_test = scaler.transform(data_test)
-				data_train = pd.DataFrame(data=data_train[0:,0:],
-					                    index=[i for i in range(data_train.shape[0])],
-					                    columns=['f'+str(i) for i in range(data_train.shape[1])])
-				data_test = pd.DataFrame(data=data_test[0:,0:],
-					                    index=[i for i in range(data_test.shape[0])],
-					                    columns=['f'+str(i) for i in range(data_test.shape[1])])
-			logreg.fit(data_train, target_train)
-			previous_stats_tr.append(logreg.score(data_train, target_train))
-			previous_stats_te.append(logreg.score(data_test, target_test))
+			print([value for value in best_set if value in current_set])
+			best_set = [value for value in current_set if value in best_set]
+			print(best_set)
+			print("--------")
+		else :
+			best_set = current_set
 
-			#Intersection of two last subsets with the best features
-			next_set = [value for value in new_current_set if value in previous_set]
-			features_sets.append(next_set)
-			print(len(next_set))
+	return best_set
 
 
-	show_plot(iterations,basic_stats_tr, basic_stats_te,"Classic - without tuning")
-	print("Training max value : %s" % max(basic_stats_tr))
-	print("Test max value : %s" % max(basic_stats_te))
-	show_plot(iterations,transform_stats_tr,transform_stats_te,"After feature selection")
-	print("Training max value : %s" % max(transform_stats_tr))
-	print("Test max value : %s" % max(transform_stats_te))
-	show_plot(iterations[1:],previous_stats_tr,previous_stats_te,"After previous feature selection")
-	print("Training max value : %s" % max(previous_stats_tr))
-	print("Test max value : %s" % max(previous_stats_te))
+'''
+Process where we select the best features based on the output of the function SelectFromModel from scikit.
+Three different plots are displayed :
+	- Performances without tuning
+	- Performances when only keeping the K best features
+	- Performances when applying the iterative process described in iterative_process()
+'''
+def feature_selection(csv, padd, kind):
+	cell_text = []
+
+	clf = algo_picker(kind)
+
+	# Classic performances without tuning
+	start = perf_counter()
+	row = []
+	gt = pd.read_csv(csv)
+	cols = [col for col in gt.columns if col not in ['label']]
+	raw_data = gt[cols]
+	raw_target = gt['label']
+
+	data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = 0.20, random_state = 0)
+
+	clf.fit(data_train, target_train)
+	row.append("Classic")
+	row.append("['f1',...,'f119']")
+	row.append(clf.score(data_train, target_train))
+	row.append(clf.score(data_test, target_test))
+	end = perf_counter()
+	row.append(end - start)
+	cell_text.append(row)
+
+
+	# Performances with K best features selection
+	start = perf_counter()
+	row = []
+	model = SelectFromModel(clf, prefit=True)
+	train_new = model.transform(data_train)
+	mask = model.get_support()
+	new_current_set = data_train.columns[mask]
+
+	gt = pd.read_csv(csv)
+	data = gt[new_current_set]
+	target = gt['label']
+	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	clf.fit(data_train, target_train)
+	row.append("K best features")
+	row.append(new_current_set.values)
+	row.append(clf.score(data_train, target_train))
+	row.append(clf.score(data_test, target_test))
+	cell_text.append(row)
+	end = perf_counter()
+	row.append(end - start)
+
+	# Performances with features selected from the iterative process
+	start = perf_counter()
+	row = []
+	best_set = iterative_process(csv, 0.15, kind)
+
+	gt = pd.read_csv(csv)
+	data = gt[best_set]
+	target = gt['label']
+	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	clf.fit(data_train, target_train)
+	row.append("Iterative process")
+	row.append(best_set)
+	row.append(clf.score(data_train, target_train))
+	row.append(clf.score(data_test, target_test))
+	cell_text.append(row)
+	end = perf_counter()
+	row.append(end - start)
+
+	print(tabulate(cell_text, headers = ['Execution','Features selected','Training set acc','Test acc','Time (s)']))
 
 def thomas_parser(csv_path):
 	data = []
@@ -207,13 +207,13 @@ def PCA_reduction(csv, kind):
 	for i in [1,0.99,0.95,0.90,0.85]:
 	    row = []
 	    row.append(i)
-	    start = time.time()
+	    start = perf_counter()
 	    pca = PCA(i) if i != 1 else PCA()
 	    pca.fit(data_train_raw)
 	    data_train = pca.transform(data_train_raw)
 	    data_test = pca.transform(data_test_raw)
 	    clf.fit(data_train, target_train)
-	    end = time.time()
+	    end = perf_counter()
 	    row.append(clf.score(data_train, target_train))
 	    row.append(clf.score(data_test, target_test))
 	    row.append(pca.n_components_)
