@@ -8,9 +8,18 @@ from datetime import datetime
 
 import pandas as pd
 
+db = psycopg2.connect(
+    database="thesis",
+    user='thesis',
+    password='carpestudentem',
+    host="revuedesingenieurs.be",
+    port="5432"
+)
+
+cursor = db.cursor()
+
 def query_feature_values(mode, selection=None):
     """ Query feature values to remote database"""
-   
     cond = ""
     multiplicator = 119
 
@@ -102,96 +111,70 @@ def get_feature_values(array, number_of_features):
 
         tmp_features.append(feature_value)
 
-    print("Number of malwares: {}".format(len(final_array)))
     print("There is some trouble with {} malware(s) " \
         .format(len(malwares_error)))
 
     return final_array
 
-
-def get_labels(threshold,selection=None, errors_as_packed=False):
-    """ Returns the following tuple (malware_id, isPacked)"""
-    if threshold > 5:
-        print( "Error :Threshold bigger than number of detectors", sys.stderr)
-        sys.exit()
-    selection_size = 5
-    desired_detectors = ""
-    error_extent = ""
-    table = "detections"
-    none_and_error = ""
-    binary_labels = """
-        SELECT malware_id, 1 AS value
-        FROM packed 
-        WHERE packer LIKE 'none' AND total - agree >= {}
-        UNION 
-        SELECT malware_id, 0 AS value
-        FROM packed 
-        WHERE packer LIKE 'none' AND total - agree < {}
-        ORDER BY malware_id;
-        """.format(threshold,threshold)
-    if selection != None:
-        if threshold > len(selection):
-            print( "Error :Threshold bigger than number of detectors", sys.stderr)
-            sys.exit()
-        cond = ""
-        for f in selection:
-                cond += " '{}',".format(f)
-        cond = "(" + cond[:-1] + ") "
-        selection_size = len(selection)
-        request = "SELECT id FROM detectors WHERE name IN {}".format(cond)
-        desired_detectors = """
-            desired_detectors AS ({}),
-            reduced_detections AS (
-                SELECT D.malware_id, D.detector_id, D.packer 
-                FROM detections D, desired_detectors P 
-                WHERE D.detector_id = P.id ORDER BY D.malware_id
-            ),""".format(request)
-        table = "reduced_detections"
-    if not errors_as_packed:
-        error_extent = "OR B.packer LIKE 'error'";
-        none_and_error = """,
-            none_and_error AS (
-            SELECT malware_id, sum(agree) AS the_sum
-            FROM packed
-            WHERE packer LIKE 'error' or packer LIKE 'none'
-            GROUP BY malware_id)
-            """
-        binary_labels = """
-            SELECT malware_id, 0 AS value
-            FROM none_and_error
-            WHERE the_sum >= {} - {}
-            UNION
-            SELECT malware_id, 1 AS value
-            FROM none_and_error
-            WHERE the_sum < {} - {}
-            ORDER BY malware_id;
-            """.format(selection_size, threshold, selection_size, threshold)
-
+def gen_labels_info():
     cursor.execute("""
-        WITH {}
-        packed AS (
-            SELECT t1.date, t1.malware_id, t1.packer, t1.agree, t2.total
-            FROM (SELECT M.date, D.malware_id, D.packer, count(packer) AS agree
-                    FROM {} D, malwares M
-                    WHERE M.id = D.malware_id
-                    GROUP BY M.date, D.malware_id, D.packer) AS t1
-            JOIN(SELECT malware_id, count(DISTINCT detector_id) AS total
-                   FROM {} B
-                   GROUP BY malware_id
-                   HAVING count(DISTINCT detector_id) = {}
-            ) AS t2
-            ON t1.malware_id = t2.malware_id){}
-        SELECT malware_id, 1 AS value
-        FROM packed A
-        WHERE NOT EXISTS(
-            SELECT * 
-            FROM packed B 
-            WHERE A.malware_id = B.malware_id  AND (B.packer LIKE 'none' {}))
-        UNION 
-        {}
-        """.format(desired_detectors,table,table,selection_size,none_and_error,error_extent,binary_labels))
+        SELECT DISTINCT D.malware_id as malware_id,
+               E.error,
+               N.none,
+               O.other,
+               M.packer,
+               M.max
+        FROM detections D
+        FULL JOIN  (
+            SELECT malware_id, count(*) as error
+            FROM detections
+            WHERE packer like 'error' AND clean
+            GROUP BY malware_id) E
+        ON D.malware_id = E.malware_id
+        FULL JOIN  (
+            SELECT malware_id, count(*) as none
+            FROM detections
+            WHERE packer like 'none' AND clean
+            GROUP BY malware_id) N
+        ON D.malware_id = N.malware_id
+        FULL JOIN  (
+            SELECT malware_id, count(*) as other
+            FROM detections
+            WHERE packer NOT like 'error' AND packer NOT like 'none' AND clean
+            GROUP BY malware_id) O
+        ON D.malware_id = O.malware_id
+        FULL JOIN  (
+            SELECT malware_id, packer ,count(*) as max
+            FROM detections
+            WHERE packer NOT like 'error' AND packer NOT like 'none' AND clean
+            GROUP BY malware_id, packer) M
+            ON D.malware_id = M.malware_id
+        ORDER BY malware_id;
+    """)
     return cursor.fetchall()
 
+def zero_if_null(value):
+    return value if value else 0 
+
+def cleaned_labels(labels):
+    for (m_id, error, none, other, packer, number) in labels:
+        error = zero_if_null(error)
+        none = zero_if_null(none)
+        other = zero_if_null(other)
+        number = zero_if_null(number)
+        if error + none + other == 5:
+            yield (m_id, error, none, other, packer, number)
+
+def get_labels(threshold):
+    assert threshold >= 3
+    buff = []
+    data = gen_labels_info()
+    for (m_id, error, none, other, packer, number) in cleaned_labels(data):
+        if none >= threshold:
+            buff.append((m_id, 0))
+        elif other >= threshold:
+            buff.append((m_id, 1))
+    return buff
 
 def merge_fv_and_label(feature_values, labels):
     """Merge feature values with corresponding label"""
@@ -285,21 +268,10 @@ def main():
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
-    labels = get_labels(args.threshold,args.detector,args.error)
+    labels = get_labels(args.threshold)
     final_array = merge_fv_and_label(features, labels)
     create_csv(final_array, name_of_features, args.start, args.limit)
-
-db = psycopg2.connect(
-    database="thesis",
-    user='thesis',
-    password='carpestudentem',
-    host="revuedesingenieurs.be",
-    port="5432"
-)
-
-cursor = db.cursor()
 
 if __name__ == '__main__':
     main()
 
-cursor.close()
