@@ -19,18 +19,18 @@ db = psycopg2.connect(
 cursor = db.cursor()
 
 
-def build_cond(features):
+def build_cond(table_name, elements):
     cond = ""
     """ Convert the features array into SQL condition """
-    if features is None:
+    if elements is None:
         return cond
-    for feature in features:
-        cond += " {},".format(feature)
-    return "AND F.num IN (" + cond[:-1] + ") "
+    for element in elements:
+        cond += " {},".format(element)
+    return "AND " + table_name + " IN (" + cond[:-1] + ") "
 
 def query_feature_values(mode, selection=None):
     """ Query feature values to remote database"""
-    cond = build_cond(selection)
+    cond = build_cond("F.num", selection)
 
     print("Request feature values")
     start = time()
@@ -106,7 +106,8 @@ def get_feature_values(array, number_of_features):
     return final_array
 
 
-def gen_labels_info():
+def gen_labels_info(detectors=None):
+    cond = build_cond('detections.detector_id', get_detectors_id(detectors))
     cursor.execute("""
         SELECT DISTINCT D.malware_id as malware_id,
                E.error,
@@ -119,28 +120,32 @@ def gen_labels_info():
             SELECT malware_id, count(*) as error
             FROM detections
             WHERE packer like 'error' AND clean
+            {cond}
             GROUP BY malware_id) E
         ON D.malware_id = E.malware_id
         FULL JOIN  (
             SELECT malware_id, count(*) as none
             FROM detections
             WHERE packer like 'none' AND clean
+            {cond}
             GROUP BY malware_id) N
         ON D.malware_id = N.malware_id
         FULL JOIN  (
             SELECT malware_id, count(*) as other
             FROM detections
             WHERE packer NOT like 'error' AND packer NOT like 'none' AND clean
+            {cond}
             GROUP BY malware_id) O
         ON D.malware_id = O.malware_id
         FULL JOIN  (
             SELECT malware_id, packer ,count(*) as max
             FROM detections
             WHERE packer NOT like 'error' AND packer NOT like 'none' AND clean
+            {cond}
             GROUP BY malware_id, packer) M
             ON D.malware_id = M.malware_id
         ORDER BY malware_id;
-    """)
+    """.format(cond=cond))
     return cursor.fetchall()
 
 
@@ -158,9 +163,9 @@ def cleaned_labels(labels):
             yield (m_id, error, none, other, packer, number)
 
 
-def get_labels(threshold, error_as_packed=False):
+def get_labels(threshold, error_as_packed=False, detectors=None):
     buff = []
-    data = gen_labels_info()
+    data = gen_labels_info(detectors)
     for (m_id, error, none, other, packer, number) in cleaned_labels(data):
         if other >= threshold:
             buff.append((m_id, 1))
@@ -209,6 +214,17 @@ def create_csv(array, labels, start, limit):
     print("File {}.csv created".format(timestamp))
 
 
+def get_detectors_id(detectors_name):
+    buff = []
+    for detector in detectors_name:
+        cursor.execute("""SELECT id FROM detectors WHERE name = %s""",
+            (detector,))
+        detector_id = cursor.fetchone()
+        if detector_id:
+            buff.append(detector_id[0])
+    return buff
+
+
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-t",
@@ -235,6 +251,7 @@ def main():
     parser.add_argument("-e", "--error",
                         action='store_true',
                         help="Consider detection errors as a packed label")
+
     parser.add_argument("-s", "--start",
                         help=textwrap.dedent('''\
                             Month from which malwares should be picked up
@@ -248,13 +265,12 @@ def main():
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
-    labels = get_labels(args.threshold, args.error)
+    labels = get_labels(args.threshold, args.error, args.detector)
     final_array = merge_fv_and_label(features, labels)
     create_csv(final_array, name_of_features, args.start, args.limit)
 
 
 if __name__ == '__main__':
     main()
-
-cursor.close()
-db.close()
+    cursor.close()
+    db.close()
