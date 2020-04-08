@@ -8,6 +8,7 @@ from joblib import dump, load
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectFromModel
 
+from dl85 import DL85Classifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
 from sklearn.linear_model import LogisticRegression
@@ -35,7 +36,8 @@ def algo_picker(name):
         "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=5,min_samples_leaf=5,random_state=0),
         "svm": SVC(kernel='poly',C=1000,gamma=100,degree=15),
         "mlp1": MLPClassifier(solver='adam',hidden_layer_sizes=(100, 100, 100),max_iter=10000),
-        "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000)
+        "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000),
+        "dl8.5": DL85Classifier(max_depth=3, time_limit=120)
     } 
   
     return switcher.get(name, "nothing") 
