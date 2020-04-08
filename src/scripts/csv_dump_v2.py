@@ -163,14 +163,18 @@ def cleaned_labels(labels):
             yield (m_id, error, none, other, packer, number)
 
 
-def get_labels(threshold, error_as_packed=False, detectors=None):
+def get_labels(threshold, error_as_packed=False, detectors=None, agreement=False):
     buff = []
     data = gen_labels_info(detectors)
     for (m_id, error, none, other, packer, number) in cleaned_labels(data):
-        if other >= threshold:
+        if other >= threshold and not agreement:
             buff.append((m_id, 1))
-        elif error_as_packed and other + error >= threshold:
+        elif error_as_packed and other + error >= threshold and not agreement:
             buff.append((m_id, 1))
+        elif agreement and other >= threshold:
+            buff.append((m_id, packer))
+        elif agreement and error_as_packed and other + error >= threshold:
+            buff.append((m_id, packer))
         else:
             buff.append((m_id, 0))
     return buff
@@ -215,6 +219,8 @@ def create_csv(array, labels, start, limit):
 
 
 def get_detectors_id(detectors_name):
+    if detectors_name is None:
+        return None
     buff = []
     for detector in detectors_name:
         cursor.execute("""SELECT id FROM detectors WHERE name = %s""",
@@ -236,6 +242,9 @@ def main():
                         "--limit",
                         type=int,
                         help="Limit number of malwares")
+    parser.add_argument("--agreement",
+                        action='store_true',
+                        help="Need to be agree on same packer's name")
     parser.add_argument("--boolean",
                         action='store_true',
                         help="Get only boolean feature")
@@ -265,7 +274,7 @@ def main():
     name_of_features = get_feature_labels(result_of_db)
     print("Number of features: {}".format(len(name_of_features)))
     features = get_feature_values(result_of_db, len(name_of_features))
-    labels = get_labels(args.threshold, args.error, args.detector)
+    labels = get_labels(args.threshold, args.error, args.detector, args.agreement)
     final_array = merge_fv_and_label(features, labels)
     create_csv(final_array, name_of_features, args.start, args.limit)
 
