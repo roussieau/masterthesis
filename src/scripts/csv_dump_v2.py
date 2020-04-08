@@ -172,9 +172,9 @@ def get_labels(threshold, error_as_packed=False, detectors=None, agreement=False
         elif error_as_packed and other + error >= threshold and not agreement:
             buff.append((m_id, 1))
         elif agreement and other >= threshold:
-            buff.append((m_id, packer))
+            buff.append((m_id, 1))
         elif agreement and error_as_packed and other + error >= threshold:
-            buff.append((m_id, packer))
+            buff.append((m_id, 1))
         else:
             buff.append((m_id, 0))
     return buff
