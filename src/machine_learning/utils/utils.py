@@ -8,6 +8,7 @@ from joblib import dump, load
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectFromModel
 
+from dl85 import DL85Classifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
 from sklearn.linear_model import LogisticRegression
@@ -25,17 +26,18 @@ tabulate.WIDE_CHARS_MODE = False
 
 def algo_picker(name): 
     switcher = { 
-    	"neigh": KNeighborsClassifier(n_neighbors=6,p=1),
+    	"neigh": KNeighborsClassifier(n_neighbors=7,p=1),
     	"gaussian": GaussianNB(),
     	"bernoulli": BernoulliNB(),
-        "log": LogisticRegression(C=0.01, max_iter=100,random_state=0), 
-        "svc": LinearSVC(C=0.01, max_iter=10000,random_state=0), 
+        "log": LogisticRegression(C=10, max_iter=1000,random_state=0), 
+        "svc": LinearSVC(C=10, max_iter=1000,random_state=0), 
         "tree": DecisionTreeClassifier(max_depth=7,min_samples_split=10,min_samples_leaf=7,random_state=0),
-        "forest": RandomForestClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
-        "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=10,min_samples_leaf=5,random_state=0),
-        "svm": SVC(kernel='poly',C=0.1,gamma=100,degree=3),
-        "mlp1": MLPClassifier(solver='adam',activation='tanh',alpha=100,hidden_layer_sizes=(50, 50, 100)),
-        "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000)
+        "forest": RandomForestClassifier(n_estimators=10,max_depth=5,min_samples_leaf=9,random_state=0),
+        "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=5,random_state=0),
+        "svm": SVC(kernel='poly',C=1000,gamma=100,degree=15),
+        "mlp1": MLPClassifier(solver='adam',hidden_layer_sizes=(100, 100, 100),max_iter=10000),
+        "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000),
+        "dl8.5": DL85Classifier(max_depth=3, time_limit=120)
     } 
   
     return switcher.get(name, "nothing") 
@@ -64,6 +66,19 @@ def iterative_process(csv, threshold, kind):
 	for t_size in iterations:
 
 		data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = t_size, random_state = 0)
+		
+		if(kind == "log" or kind == "svc"):
+			scaler = Normalizer()
+			scaler.fit(data_train)
+			data_train = scaler.transform(data_train)
+			data_test = scaler.transform(data_test)
+			data_train = pd.DataFrame(data=data_train[0:,0:],
+				                    index=[i for i in range(data_train.shape[0])],
+				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+			data_test = pd.DataFrame(data=data_test[0:,0:],
+				                    index=[i for i in range(data_test.shape[0])],
+				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
+
 		clf.fit(data_train, target_train)
 
 		#Select K best features
@@ -103,8 +118,21 @@ def feature_selection(csv, kind, threshold=0.005):
 
 	data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = 0.20, random_state = 0)
 
+	if(kind == "log" or kind == "svc"):
+			scaler = Normalizer()
+			scaler.fit(data_train)
+			data_train = scaler.transform(data_train)
+			data_test = scaler.transform(data_test)
+			data_train = pd.DataFrame(data=data_train[0:,0:],
+				                    index=[i for i in range(data_train.shape[0])],
+				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+			data_test = pd.DataFrame(data=data_test[0:,0:],
+				                    index=[i for i in range(data_test.shape[0])],
+				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
+
 	clf.fit(data_train, target_train)
 	row.append("Classic")
+	row.append("119")
 	row.append("['f1',...,'f119']")
 	row.append(clf.score(data_train, target_train))
 	row.append(clf.score(data_test, target_test))
@@ -128,6 +156,7 @@ def feature_selection(csv, kind, threshold=0.005):
 
 	clf.fit(data_train, target_train)
 	row.append("K best features")
+	row.append(len(new_current_set.values))
 	row.append(parse_list(new_current_set.values))
 	row.append(clf.score(data_train, target_train))
 	row.append(clf.score(data_test, target_test))
@@ -147,6 +176,7 @@ def feature_selection(csv, kind, threshold=0.005):
 
 	clf.fit(data_train, target_train)
 	row.append("Iterative process")
+	row.append(len(best_set))
 	row.append(parse_list(best_set))
 	row.append(clf.score(data_train, target_train))
 	row.append(clf.score(data_test, target_test))
@@ -154,7 +184,7 @@ def feature_selection(csv, kind, threshold=0.005):
 	end = perf_counter()
 	row.append(end - start)
 
-	print(tabulate(cell_text, headers = ['Execution','Features selected','Training set acc','Test acc','Time (s)']))
+	print(tabulate(cell_text, headers = ['Execution','# features','Features selected','Training set acc','Test acc','Time (s)']))
 
 # Launch the feature selection process for different feature importances
 def fs_driver(csv, kind, thresholds):
