@@ -11,6 +11,8 @@ from pefeats import Pefeats
 from database import Database
 import os
 
+import threading
+
 db = Database()
 
 class Malware:
@@ -43,10 +45,14 @@ class Malware:
         print(Pefeats(self))
 
     def compute(self, save=False, show=False):
-        DetectItEasy(self).compute(save, show)
-        Peframe(self).compute(save, show)
-        Manalyze(self).compute(save, show)
-        Peid(self).compute(save, show)
+        t1 = DetectItEasy(self).compute(save, show)
+        t2 = Peframe(self).compute(save, show)
+        t3 = Manalyze(self).compute(save, show)
+        t4 = Peid(self).compute(save, show)
+        t1.join()
+        t2.join()
+        t3.join()
+        t4.join()
 
     def auto(self, save=False, show=False):
         if not self.have_detections():
@@ -60,6 +66,7 @@ def builder(path):
         files = os.listdir("{}/{}".format(path, date)) 
         for f in files:
             yield (date, "{}/{}/{}".format(path, date, f))
+
 
 def main():
     parser = argparse.ArgumentParser(description='Packer detector')
