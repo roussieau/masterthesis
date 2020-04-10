@@ -1,4 +1,5 @@
 from database import Database
+import threading
 
 db = Database()
 
@@ -15,7 +16,7 @@ class PackerDetector:
     def get_id(self):
         return db.get_detector_id(detector_name=self.get_detector_name())
 
-    def compute(self, save=False, show=False):
+    def compute_thread(self, save, show):
         results = self.analyze()
         if not save or show:
             print("{}: {}".format(self.get_detector_name(), results))
@@ -29,6 +30,11 @@ class PackerDetector:
                 db.add_analysis(self.malware.get_id(),
                                 self.get_id(),
                                 results.lower())
+
+    def compute(self, save=False, show=False):
+        t = threading.Thread(target=self.compute_thread, args=(save, show))
+        t.start()
+        return t
 
     def __str__(self):
         result = self.analyze()
