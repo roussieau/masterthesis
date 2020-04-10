@@ -34,10 +34,10 @@ def algo_picker(name):
         "tree": DecisionTreeClassifier(max_depth=7,min_samples_split=10,min_samples_leaf=7,random_state=0),
         "forest": RandomForestClassifier(n_estimators=10,max_depth=5,min_samples_leaf=9,random_state=0),
         "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=5,random_state=0),
-        "svm": SVC(kernel='poly',C=1000,gamma=100,degree=15),
-        "mlp1": MLPClassifier(solver='adam',hidden_layer_sizes=(100, 100, 100),max_iter=10000),
-        "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000),
-        "dl8.5": DL85Classifier(max_depth=3, time_limit=120)
+        "svm": SVC(kernel='poly',C=1000,gamma=100,degree=15,random_state=0),
+        "mlp1": MLPClassifier(solver='adam',hidden_layer_sizes=(100, 100, 100),max_iter=10000,random_state=0),
+        "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000,random_state=0),
+        "dl8.5": DL85Classifier(max_depth=3, time_limit=120,random_state=0)
     } 
   
     return switcher.get(name, "nothing") 
