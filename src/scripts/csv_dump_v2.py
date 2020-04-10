@@ -238,7 +238,7 @@ def verify(csv,threshold):
     df = pd.read_csv(csv)
     ceil = df.shape[0]
     for i in range(0,20):
-        index = random.randint(1,ceil)
+        index = random.randint(2,ceil)
         label = df.at[index,'label']
         hash_value = "'"+df.at[index,'hash']+"'"
         cursor.execute("""
