@@ -3,6 +3,7 @@
 import psycopg2
 import argparse
 import textwrap
+import random
 from datetime import datetime
 from time import time
 
@@ -35,7 +36,7 @@ def query_feature_values(mode, selection=None):
     print("Request feature values")
     start = time()
     cursor.execute("""
-        SELECT FV.malware_id, F.num, FV.value, M.date
+        SELECT FV.malware_id, F.num, FV.value, M.date, M.hash
         FROM features F, feature_values FV, malwares M
         WHERE FV.feature_id = F.id
         AND FV.malware_id = M.id
@@ -87,15 +88,16 @@ def get_feature_values(array, number_of_features):
     malwares_error = []
     final_array = []
 
-    for (malware_id, f_num, feature_value, date) in array:
+    for (malware_id, f_num, feature_value, date, hash) in array:
         if current_id != malware_id:
-            if len(tmp_features) == number_of_features + 2:
+            if len(tmp_features) == number_of_features + 3:
                 final_array.append(tmp_features)
             else:
                 malwares_error.append(malware_id)
 
             tmp_features = []
             tmp_features.append(date)
+            tmp_features.append(hash)
             tmp_features.append(malware_id)
             current_id = malware_id
 
@@ -188,12 +190,12 @@ def merge_fv_and_label(feature_values, labels):
 
     while(fv_index < len(feature_values) and label_index < len(labels)):
         # Corresponding malware id
-        if feature_values[fv_index][1] == labels[label_index][0]:
-            new_row = [feature_values[fv_index][0]] + feature_values[fv_index][2:] + [labels[label_index][1]]
+        if feature_values[fv_index][2] == labels[label_index][0]:
+            new_row = [feature_values[fv_index][0]] + [feature_values[fv_index][1]] +feature_values[fv_index][3:] + [labels[label_index][1]]
             global_array.append(new_row)
             fv_index += 1
             label_index += 1
-        elif feature_values[fv_index][1] < labels[label_index][0]:
+        elif feature_values[fv_index][2] < labels[label_index][0]:
             fv_index += 1
         else:
             label_index += 1
@@ -206,7 +208,8 @@ def create_csv(array, labels, start, limit):
     timestamp = now.strftime("%Y.%m.%d-%H.%M")
     df = pd.DataFrame(data=array,
                       index=[i for i in range(len(array))],
-                      columns=['date'] + ['f'+str(i) for i in labels] + ['label'])
+                      columns=['date'] + ['hash'] + ['f'+str(i) for i in labels] + ['label'])
+    df.drop('hash', 1, inplace=True)
     df.sort_values(by='date', ascending=1, inplace=True)
     indexNames = df[df['date'] < start].index
     df.drop(indexNames, inplace=True)
@@ -231,6 +234,28 @@ def get_detectors_id(detectors_name):
     return buff
 
 
+def verify(csv,threshold):
+    df = pd.read_csv(csv)
+    ceil = df.shape[0]
+    for i in range(0,20):
+        index = random.randint(1,ceil)
+        label = df.at[index,'label']
+        hash_value = "'"+df.at[index,'hash']+"'"
+        cursor.execute("""
+            SELECT count(*)
+            FROM detections D, malwares M
+            WHERE D.malware_id = M.id 
+            AND M.hash = {} 
+            AND D.packer NOT LIKE 'none'
+            AND D.packer NOT LIKE 'error'
+        """.format(hash_value,))
+        db_label = 1 if (cursor.fetchone()[0] >= threshold) else 0
+        if label == db_label:
+            print("%s : database & csv agree" % hash_value)
+        else:
+            print("%s : database says %s while value in csv is %s" % (hash_value,db_label,label))
+
+
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-t",
@@ -244,7 +269,7 @@ def main():
                         help="Limit number of malwares")
     parser.add_argument("--agreement",
                         action='store_true',
-                        help="Need to be agree on same packer's name")
+                        help="Need to agree on same packer's name")
     parser.add_argument("--boolean",
                         action='store_true',
                         help="Get only boolean feature")
