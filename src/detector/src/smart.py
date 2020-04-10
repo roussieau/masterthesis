@@ -11,7 +11,7 @@ THRESHOLD_FEATURE = THRESHOLD_MALWARE * 119
 
 def convert_date(zipped_date):
     year, month, day = zipped_date.split(".")[0].split("-")
-    return "{}{}{}".format(year, month, day)
+     return "{}{}{}".format(year, month, day)
 
 def is_zip(f):
     splited = f.split('.')
