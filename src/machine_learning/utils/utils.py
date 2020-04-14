@@ -37,7 +37,7 @@ def algo_picker(name):
         "svm": SVC(kernel='poly',C=1000,gamma=100,degree=15,random_state=0),
         "mlp1": MLPClassifier(solver='adam',hidden_layer_sizes=(100, 100, 100),max_iter=10000,random_state=0),
         "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000,random_state=0),
-        "dl8.5": DL85Classifier(max_depth=3, time_limit=120,random_state=0)
+        "dl8.5": DL85Classifier(max_depth=3, time_limit=120)
     } 
   
     return switcher.get(name, "nothing") 

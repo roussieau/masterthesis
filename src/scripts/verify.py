@@ -32,7 +32,7 @@ def path_picker(name, threshold):
 	return base +  clf + 'snapshots/' + name + '_' + str(threshold) + '_20190615_31000.joblib'
 
 
-def verify(threshold, repetition, classifiers):
+def set_accuracy(threshold, repetition, classifiers):
 	csv = '../dumps/time_analysis/threshold_' + str(threshold) + '/' + str(threshold) + '_20190615_31000.csv'
 	df = pd.read_csv(csv)
 	ceil = df.shape[0]
@@ -61,10 +61,42 @@ def verify(threshold, repetition, classifiers):
 		print(tabulate(cell_text, headers = ['Classifier','Row index','Y','Predicted Y','Status']))
 		print("Accuracy : %d %s" % (((correct/repetition)*100),'%'))
 
+def single_malware_comparison(threshold, classifiers):
+	csv = '../dumps/time_analysis/threshold_' + str(threshold) + '/' + str(threshold) + '_20190615_31000.csv'
+	df = pd.read_csv(csv)
+	ceil = df.shape[0]
+	index = random.randint(2,ceil)
+	line = df.iloc[index]
+	cell_text = []
+	cols = [col for col in df.columns if col not in ['label']]
+	x = [line[cols]]
+	y = line['label']
+	row = []
+	row.append('control')
+	row.append(y)
+	cell_text.append(row)
+	for c in classifiers:
+		row = []
+		clf = load(path_picker(c,threshold))
+		predict_y = clf.predict(x)
+		row.append(c)
+		row.append(predict_y)
+		cell_text.append(row)
+	print(tabulate(cell_text, headers = ['Name','Y']))
+
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-w",
+    					"--which",
+    					type=int,
+    					help=textwrap.dedent('''\
+                            Which test to run
+                            1: one malware comparison (default)
+                            2: accuracy per classifier
+                            '''),
+    					default=1)
     parser.add_argument("-t",
                         "--threshold",
                         type=int,
@@ -74,7 +106,7 @@ if __name__ == '__main__':
                         "--repetition",
                         type=int,
                         help="Number of tests",
-                        default=10)
+                        default=5)
     parser.add_argument("-c", 
     					"--classifier",
                         nargs="+",
@@ -83,5 +115,5 @@ if __name__ == '__main__':
                             [tree, gaussian, neigh, mlp1, svc]
                             '''))
     args = parser.parse_args()
-    classifiers = args.classifier if args.classifier != None else ['tree']
-    verify(args.threshold, args.repetition, classifiers)
+    classifiers = args.classifier if args.classifier != None else ['neigh','tree','forest','gradient']
+    single_malware_comparison(args.threshold, classifiers) if args.which else set_accuracy(args.threshold, args.repetition, classifiers)
