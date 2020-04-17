@@ -227,20 +227,29 @@ def thomas_parser(csv_path):
 	df.to_csv(file_name,index=False)
 	return file_name
 
+'''
+//!\\ CAREFUL : PCA with all features doesn't give the same results as not applying since we perform
+StandardScaler operation which (most of the time) reduces the accuracy
+'''
 def PCA_reduction(csv, kind):
 	gt = pd.read_csv(csv)
 	cols = [col for col in gt.columns if col not in ['label']]
 	data = gt[cols]
 	target = gt['label']
 
+	cell_text = []
 	clf = algo_picker(kind)
 
+	default_perf = single_perf(csv, kind)
+	cell_text.append(['no pca', default_perf[0], default_perf[1], 'all', default_perf[2]])
+
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	#Fixed cost of parsing the data for PCA, not taken into account for computation time
 	scaler = StandardScaler()
 	scaler.fit(data_train)
 	data_train_raw = scaler.transform(data_train)
 	data_test_raw = scaler.transform(data_test)
-	cell_text = []
 	for i in [1,0.99,0.95,0.90,0.85]:
 	    row = []
 	    row.append(i)
@@ -257,6 +266,111 @@ def PCA_reduction(csv, kind):
 	    row.append(end-start)
 	    cell_text.append(row)
 	print(tabulate(cell_text, headers = ['Variance','Training acc','Test acc','Components','Time (s)']))
+
+def PCA_components(csv, kind, silent=False):
+	gt = pd.read_csv(csv)
+	cols = [col for col in gt.columns if col not in ['label']]
+	data = gt[cols]
+	target = gt['label']
+
+	clf = algo_picker(kind)
+
+	default_perf = single_perf(csv, kind)
+
+	data_train_raw, data_test_raw, target_train_raw, target_test_raw = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	#Fixed cost of parsing the data for PCA, not taken into account for computation time
+	scaler = StandardScaler()
+	scaler.fit(data_train_raw)
+	data_train_raw = scaler.transform(data_train_raw)
+	data_test_raw = scaler.transform(data_test_raw)
+	test_accuracy = []
+	cell_text = []
+	n_comp = range(1,120)
+	for i in n_comp:
+		timer = []
+		start = perf_counter()
+		pca = PCA(n_components=i)
+		pca.fit(data_train_raw)
+		data_train = pca.transform(data_train_raw)
+		data_test = pca.transform(data_test_raw)
+		clf.fit(data_train, target_train_raw)
+		end = perf_counter()
+		test_accuracy.append(clf.score(data_test, target_test_raw))
+		timer.append(i)
+		timer.append(clf.score(data_test, target_test_raw))
+		timer.append(end-start)
+		cell_text.append(timer)
+	better = [c-1 for c in n_comp if cell_text[c-1][2] <= default_perf[2]]
+	filtered_cell = [cell_text[x] for x in better]
+	filtered_cell.sort(key = lambda x: x[1], reverse = True)
+	filtered_cell = filtered_cell[:5]
+	filtered_cell.insert(0,['no PCA', default_perf[1], default_perf[2]])
+
+	if not silent:
+		plt.plot(n_comp, test_accuracy, label="test accuracy") 
+		plt.ylabel("Accuracy")
+		plt.xlabel("# components")
+		plt.legend()
+		plt.axhline(y=default_perf[1], color='g')
+		plt.show()
+		print("Top 5 features combinations with times <= than default case : \n")
+		print(tabulate(filtered_cell, headers = ['# components','Acc','Time']))
+
+	return filtered_cell[1][0]
+
+def PCA_snapshot(csv, kind):
+	gt = pd.read_csv(csv)
+	cols = [col for col in gt.columns if col not in ['label']]
+	data_train = gt[cols]
+	target_train = gt['label']
+
+	clf = algo_picker(kind)
+	pca = PCA(n_components=PCA_components(csv, kind, True))
+
+	pca.fit(data_train)
+	data_train = pca.transform(data_train)
+	clf.fit(data_train, target_train)
+	dump(clf,"snapshots/PCA.joblib")
+
+	clf = load("snapshots/PCA.joblib")
+
+	gt = pd.read_csv("../../dumps/time_analysis/threshold_3/3_20190808_1000.csv")
+	cols = [col for col in gt.columns if col not in ['label']]
+	data_test = gt[cols]
+	target_test = gt['label']
+
+	pca.fit(data_test)
+	data_test = pca.transform(data_test)
+
+
+	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
+	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
+
+def single_perf(csv, kind):
+	gt = pd.read_csv(csv)
+	cols = [col for col in gt.columns if col not in ['label']]
+	data = gt[cols]
+	target = gt['label']
+
+	clf = algo_picker(kind)
+
+	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	if kind != "tree" and kind != "forest" and kind != "gradient":
+		if kind == "gaussian" or kind == "bernoulli":
+			scaler = StandardScaler()
+		else:
+			scaler = Normalizer()
+		scaler.fit(data_train)
+		data_train = scaler.transform(data_train)
+		data_test = scaler.transform(data_test)
+
+	g_start = perf_counter()
+	clf.fit(data_train, target_train)
+	g_end = perf_counter()
+	g_time = g_end - g_start
+	return [clf.score(data_train, target_train), clf.score(data_test, target_test), g_time]
 
 def perf(csv, kind, only_b):
 	second_test = False
