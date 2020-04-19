@@ -319,14 +319,14 @@ def PCA_components(csv, kind, silent=False):
 
 	return filtered_cell[1][0]
 
-def PCA_snapshot(csv, kind):
+def PCA_snapshot(csv, kind, path_to_parent):
 	gt = pd.read_csv(csv)
 	cols = [col for col in gt.columns if col not in ['label']]
 	data_train = gt[cols]
 	target_train = gt['label']
 
 	clf = algo_picker(kind)
-	pca = PCA(n_components=PCA_components(csv, kind, True))
+	pca = PCA(n_components=PCA_components(csv, kind, False))
 
 	pca.fit(data_train)
 	data_train = pca.transform(data_train)
@@ -335,7 +335,7 @@ def PCA_snapshot(csv, kind):
 
 	clf = load("snapshots/PCA.joblib")
 
-	gt = pd.read_csv("../../dumps/time_analysis/threshold_3/3_20190808_1000.csv")
+	gt = pd.read_csv(path_to_parent+"../dumps/time_analysis/threshold_3/3_20190808_1000.csv")
 	cols = [col for col in gt.columns if col not in ['label']]
 	data_test = gt[cols]
 	target_test = gt['label']
