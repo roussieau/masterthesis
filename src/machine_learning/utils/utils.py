@@ -23,7 +23,9 @@ from toBoolean import convert
 
 tabulate.WIDE_CHARS_MODE = False
 
-
+'''
+Dictionary of classifiers
+'''
 def algo_picker(name): 
     switcher = { 
     	"neigh": KNeighborsClassifier(n_neighbors=7,p=1),
@@ -136,6 +138,7 @@ Three different plots are displayed :
 	- Performances without tuning
 	- Performances when only keeping the K best features
 	- Performances when applying the iterative process described in iterative_process()
+Accuracy/time ratios are also computed and returned 
 '''
 def feature_selection(csv, kind, threshold=0.005, silent=False):
 	cell_text = []
@@ -286,8 +289,10 @@ def feature_selection(csv, kind, threshold=0.005, silent=False):
 
 	return ratios
 
-
-# Launch the feature selection process for different feature importances
+'''
+Launches the feature selection process for different feature importances
+Retrieves the best ratios of accuracy/time, sort them and outputs the best result
+'''
 def fs_driver(csv, kind, thresholds, silent=False):
 	ratios = []
 	for i in thresholds:
@@ -330,7 +335,7 @@ def feature_snapshot(csv, kind):
 	print("K best features : \n")
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
-	
+
 	print("------------------------------ \n")
 
 	# Iterative process
@@ -350,7 +355,9 @@ def feature_snapshot(csv, kind):
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
 
-
+'''
+Used to parse Thomas datasets into new ones that fit our classifiers
+'''
 def thomas_parser(csv_path):
 	data = []
 	data_filter = []
@@ -387,6 +394,7 @@ def thomas_parser(csv_path):
 
 
 '''
+Uses variance as threshold
 //!\\ CAREFUL : PCA with all features doesn't give the same results as not applying since we perform
 StandardScaler operation which (most of the time) reduces the accuracy
 '''
@@ -427,6 +435,7 @@ def PCA_reduction(csv, kind):
 	print(tabulate(cell_text, headers = ['Variance','Training acc','Test acc','Components','Time (s)']))
 
 '''
+Uses number of components as threshold
 Finds the top 5 PCA combinations offering best time reduction
 '''
 def PCA_components(csv, kind, silent=False):
@@ -512,6 +521,9 @@ def PCA_snapshot(csv, kind, path_to_parent):
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
+'''
+Outputs [training accuracy, test accuracy, time] for a classifier over a specifid dataset
+'''
 def single_perf(csv, kind):
 	gt = pd.read_csv(csv)
 	cols = [col for col in gt.columns if col not in ['label']]
@@ -537,6 +549,11 @@ def single_perf(csv, kind):
 	g_time = g_end - g_start
 	return [clf.score(data_train, target_train), clf.score(data_test, target_test), g_time]
 
+
+'''
+Prints performances for a classifier ober a specific dataset
+Allows to use boolean dataset
+'''
 def perf(csv, kind, only_b):
 	second_test = False
 	gt = pd.read_csv(csv)
@@ -592,7 +609,10 @@ def perf(csv, kind, only_b):
 		print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 		print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
-
+'''
+Performs time comparison for a specifid classifier
+All thresholds and dataset size are tested
+'''
 def time_comparison(kind, path_to_parent):
 	clf = algo_picker(kind)
 	file_path = "_20190615_"
@@ -656,7 +676,9 @@ def ratio_computation(from_acc, to_acc, from_time, to_time):
 		ratio = diff_time
 	return ratio
 
-
+'''
+Split a list of features in multiple lines to enhance the display when printed
+'''
 def parse_list(features):
 	link = "["
 	for i in range(0,len(features)):
