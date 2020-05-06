@@ -30,7 +30,7 @@ def algo_picker(name):
     switcher = { 
     	"neigh": KNeighborsClassifier(n_neighbors=7,p=1),
     	"gaussian": GaussianNB(),
-    	"bernoulli": BernoulliNB(),
+    	"bernoulli": BernoulliNB(binarize=0.0),
         "log": LogisticRegression(C=10, max_iter=1000,random_state=0), 
         "svc": LinearSVC(C=10, max_iter=1000,random_state=0), 
         "tree": DecisionTreeClassifier(max_depth=7,min_samples_split=10,min_samples_leaf=7,random_state=0),
@@ -420,9 +420,9 @@ def PCA_reduction(csv, kind):
 	for i in [1,0.99,0.95,0.90,0.85]:
 	    row = []
 	    row.append(i)
-	    start = perf_counter()
 	    pca = PCA(i) if i != 1 else PCA()
 	    pca.fit(data_train_raw)
+	    start = perf_counter()
 	    data_train = pca.transform(data_train_raw)
 	    data_test = pca.transform(data_test_raw)
 	    clf.fit(data_train, target_train)
@@ -460,9 +460,10 @@ def PCA_components(csv, kind, silent=False):
 	n_comp = range(1,120)
 	for i in n_comp:
 		timer = []
-		start = perf_counter()
+		f_start = perf_counter()
 		pca = PCA(n_components=i)
 		pca.fit(data_train_raw)
+		start = perf_counter()
 		data_train = pca.transform(data_train_raw)
 		data_test = pca.transform(data_test_raw)
 		clf.fit(data_train, target_train_raw)
@@ -471,9 +472,11 @@ def PCA_components(csv, kind, silent=False):
 		timer.append(i)
 		timer.append(clf.score(data_test, target_test_raw))
 		timer.append(end-start)
+		timer.append(start-f_start)
 		cell_text.append(timer)
 	better = [c-1 for c in n_comp if cell_text[c-1][2] <= default_perf[2]]
 	filtered_cell = [cell_text[x] for x in better]
+	#filtered_cell = cell_text
 	filtered_cell.sort(key = lambda x: x[1], reverse = True)
 	filtered_cell = filtered_cell[:5]
 	filtered_cell.insert(0,['no PCA', default_perf[1], default_perf[2]])
@@ -485,8 +488,8 @@ def PCA_components(csv, kind, silent=False):
 		plt.legend()
 		plt.axhline(y=default_perf[1], color='g')
 		plt.show()
-		print("Top 5 features combinations with times <= than default case : \n")
-		print(tabulate(filtered_cell, headers = ['# components','Acc','Time']))
+		print("Top 5 combinations of features : \n")
+		print(tabulate(filtered_cell, headers = ['# components','Test accuracy','Time (s)','Fixed cost (s)']))
 
 	return filtered_cell[1][0]
 
@@ -514,7 +517,7 @@ def PCA_snapshot(csv, kind, path_to_parent):
 	data_test = gt[cols]
 	target_test = gt['label']
 
-	pca.fit(data_test)
+	#pca.fit(data_test)
 	data_test = pca.transform(data_test)
 
 
