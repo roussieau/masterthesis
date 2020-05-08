@@ -31,7 +31,7 @@ def algo_picker(name):
     	"neigh": KNeighborsClassifier(n_neighbors=7,p=1),
     	"gaussian": GaussianNB(),
     	"bernoulli": BernoulliNB(binarize=0.0),
-        "log": LogisticRegression(C=10, max_iter=1000,random_state=0), 
+        "log": LogisticRegression(max_iter=1000,random_state=0), 
         "svc": LinearSVC(C=10, max_iter=1000,random_state=0), 
         "tree": DecisionTreeClassifier(max_depth=7,min_samples_split=10,min_samples_leaf=7,random_state=0),
         "forest": RandomForestClassifier(n_estimators=10,max_depth=5,min_samples_leaf=9,random_state=0),
@@ -70,16 +70,16 @@ def iterative_process(csv, threshold, kind):
 		data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = t_size, random_state = 0)
 		
 		if(kind == "log" or kind == "svc"):
-			scaler = Normalizer()
+			scaler = StandardScaler()
 			scaler.fit(data_train)
 			data_train = scaler.transform(data_train)
 			data_test = scaler.transform(data_test)
 			data_train = pd.DataFrame(data=data_train[0:,0:],
 				                    index=[i for i in range(data_train.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+				                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 			data_test = pd.DataFrame(data=data_test[0:,0:],
 				                    index=[i for i in range(data_test.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
+				                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 
 		clf.fit(data_train, target_train)
 
@@ -111,16 +111,16 @@ def k_best_features(csv, threshold, kind):
 	data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = 0.20, random_state = 0)
 
 	if(kind == "log" or kind == "svc"):
-			scaler = Normalizer()
+			scaler = StandardScaler()
 			scaler.fit(data_train)
 			data_train = scaler.transform(data_train)
 			data_test = scaler.transform(data_test)
 			data_train = pd.DataFrame(data=data_train[0:,0:],
 				                    index=[i for i in range(data_train.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+				                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 			data_test = pd.DataFrame(data=data_test[0:,0:],
 				                    index=[i for i in range(data_test.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
+				                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 
 	clf.fit(data_train, target_train)
 
@@ -157,16 +157,16 @@ def feature_selection(csv, kind, threshold=0.005, silent=False):
 	data_train, data_test, target_train, target_test = train_test_split(raw_data, raw_target, test_size = 0.20, random_state = 0)
 
 	if(kind == "log" or kind == "svc"):
-			scaler = Normalizer()
+			scaler = StandardScaler()
 			scaler.fit(data_train)
 			data_train = scaler.transform(data_train)
 			data_test = scaler.transform(data_test)
 			data_train = pd.DataFrame(data=data_train[0:,0:],
 				                    index=[i for i in range(data_train.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+				                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 			data_test = pd.DataFrame(data=data_test[0:,0:],
 				                    index=[i for i in range(data_test.shape[0])],
-				                    columns=['f'+str(i) for i in range(data_test.shape[1])])
+				                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 	#start = perf_counter()
 	clf.fit(data_train, target_train)
 	end = perf_counter()
@@ -199,16 +199,16 @@ def feature_selection(csv, kind, threshold=0.005, silent=False):
 		data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
 		if(kind == "log" or kind == "svc"):
-				scaler = Normalizer()
+				scaler = StandardScaler()
 				scaler.fit(data_train)
 				data_train = scaler.transform(data_train)
 				data_test = scaler.transform(data_test)
 				data_train = pd.DataFrame(data=data_train[0:,0:],
 					                    index=[i for i in range(data_train.shape[0])],
-					                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+					                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 				data_test = pd.DataFrame(data=data_test[0:,0:],
 					                    index=[i for i in range(data_test.shape[0])],
-					                    columns=['f'+str(i) for i in range(data_test.shape[1])])
+					                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 
 		clf.fit(data_train, target_train)
 		end = perf_counter()
@@ -250,16 +250,16 @@ def feature_selection(csv, kind, threshold=0.005, silent=False):
 		data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
 		if(kind == "log" or kind == "svc"):
-				scaler = Normalizer()
+				scaler = StandardScaler()
 				scaler.fit(data_train)
 				data_train = scaler.transform(data_train)
 				data_test = scaler.transform(data_test)
 				data_train = pd.DataFrame(data=data_train[0:,0:],
 					                    index=[i for i in range(data_train.shape[0])],
-					                    columns=['f'+str(i) for i in range(data_train.shape[1])])
+					                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 				data_test = pd.DataFrame(data=data_test[0:,0:],
 					                    index=[i for i in range(data_test.shape[0])],
-					                    columns=['f'+str(i) for i in range(data_test.shape[1])])
+					                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 
 		clf.fit(data_train, target_train)
 		end = perf_counter()
@@ -384,7 +384,7 @@ def thomas_parser(csv_path):
 	data = np.array(data_filter)
 	df1 = pd.DataFrame(data=data[0:,0:],
 	                    index=[i for i in range(data.shape[0])],
-	                    columns=['f'+str(i+1) for i in range(data.shape[1])])
+	                    columns=['f'+str(i+1) for i in range(1, data_train.shape[1]+1)])
 	target = np.array(target_filter)
 	df2 = pd.DataFrame({'label':target})
 	df = df1.join(df2)
@@ -538,10 +538,10 @@ def single_perf(csv, kind):
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
 	if kind != "tree" and kind != "forest" and kind != "gradient":
-		if kind == "gaussian" or kind == "bernoulli":
-			scaler = StandardScaler()
-		else:
+		if kind == "neigh":
 			scaler = Normalizer()
+		else:
+			scaler = StandardScaler()
 		scaler.fit(data_train)
 		data_train = scaler.transform(data_train)
 		data_test = scaler.transform(data_test)
@@ -572,10 +572,10 @@ def perf(csv, kind, only_b):
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
 	if kind != "tree" and kind != "forest" and kind != "gradient":
-		if kind == "gaussian" or kind == "bernoulli":
-			scaler = StandardScaler()
-		else:
+		if kind == "neigh":
 			scaler = Normalizer()
+		else:
+			scaler = StandardScaler()
 		scaler.fit(data_train)
 		data_train = scaler.transform(data_train)
 		data_test = scaler.transform(data_test)
@@ -598,10 +598,10 @@ def perf(csv, kind, only_b):
 		data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
 		if kind != "tree" and kind != "forest" and kind != "gradient":
-			if kind == "gaussian" or kind == "bernoulli":
-				scaler = StandardScaler()
-			else:
+			if kind == "neigh":
 				scaler = Normalizer()
+			else:
+				scaler = StandardScaler()
 			scaler.fit(data_train)
 			data_train = scaler.transform(data_train)
 			data_test = scaler.transform(data_test)
@@ -640,10 +640,10 @@ def time_comparison(kind, path_to_parent):
 			target_train = gt['label']
 
 			if kind != "tree" and kind != "forest" and kind != "gradient":
-				if kind == "gaussian" or kind == "bernoulli":
-					scaler = StandardScaler()
-				else:
+				if kind == "neigh":
 					scaler = Normalizer()
+				else:
+					scaler = StandardScaler()
 				scaler.fit(data_train)
 				data_train = scaler.transform(data_train)
 
