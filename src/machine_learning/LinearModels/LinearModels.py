@@ -61,9 +61,9 @@ def display_plot_svc(csv, t_size, min_c, max_c):
 	    test_accuracy.append(clf.score(data_test, target_test))
 	    svc_settings.append(start_point)
 	    start_point *= 10
-	plt.plot(range(len(logreg_settings)), training_accuracy, label="training accuracy")
-	plt.plot(range(len(logreg_settings)), test_accuracy, label="test accuracy")
-	plt.xticks(range(len(logreg_settings)),logreg_settings)
+	plt.plot(range(len(svc_settings)), training_accuracy, label="training accuracy")
+	plt.plot(range(len(svc_settings)), test_accuracy, label="test accuracy")
+	plt.xticks(range(len(svc_settings)), svc_settings)
 	plt.ylabel("Accuracy")
 	plt.xlabel("C value")
 	plt.legend()

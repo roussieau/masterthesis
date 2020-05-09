@@ -32,7 +32,7 @@ def algo_picker(name):
     	"gaussian": GaussianNB(),
     	"bernoulli": BernoulliNB(binarize=0.0),
         "log": LogisticRegression(max_iter=1000,random_state=0), 
-        "svc": LinearSVC(C=10, max_iter=1000,random_state=0), 
+        "svc": LinearSVC(C=0.1, max_iter=1000,random_state=0), 
         "tree": DecisionTreeClassifier(max_depth=7,min_samples_split=10,min_samples_leaf=7,random_state=0),
         "forest": RandomForestClassifier(n_estimators=10,max_depth=5,min_samples_leaf=9,random_state=0),
         "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=5,random_state=0),
