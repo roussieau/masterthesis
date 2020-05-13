@@ -32,12 +32,12 @@ def algo_picker(name):
     	"gaussian": GaussianNB(),
     	"bernoulli": BernoulliNB(binarize=0.0),
         "log": LogisticRegression(max_iter=1000,random_state=0), 
-        "svc": LinearSVC(C=0.1, max_iter=1000,random_state=0), 
+        "svc": LinearSVC(C=0.1, max_iter=10000,random_state=0), 
         "tree": DecisionTreeClassifier(max_depth=7,min_samples_split=10,min_samples_leaf=7,random_state=0),
-        "forest": RandomForestClassifier(n_estimators=10,max_depth=5,min_samples_leaf=9,random_state=0),
-        "gradient": GradientBoostingClassifier(n_estimators=10,max_depth=5,random_state=0),
-        "svm": SVC(kernel='poly',C=1000,gamma=100,degree=15,random_state=0),
-        "mlp1": MLPClassifier(solver='adam',hidden_layer_sizes=(100, 100, 100),max_iter=10000,random_state=0),
+        "forest": RandomForestClassifier(n_estimators=35,max_depth=5,random_state=0),
+        "gradient": GradientBoostingClassifier(n_estimators=35,max_depth=5,random_state=0),
+        "svm": SVC(random_state=0),
+        "mlp1": MLPClassifier(hidden_layer_sizes=(75, 100),random_state=0),
         "mlp2": MLPClassifier(solver='sgd',activation='tanh',alpha=0.1,hidden_layer_sizes=(100,50,50),max_iter=1000,random_state=0),
         "dl8.5": DL85Classifier(max_depth=3, time_limit=120)
     } 
@@ -689,6 +689,33 @@ def parse_list(features):
 			link += "\n"
 		link += "'"+str(features[i])+"',"
 	return link[:-1]+"]"
+
+'''
+Generate all possible combination of layers
+'''
+def layers_generator():
+	import itertools
+	arr = []
+	for i in [
+		list(itertools.permutations([25,50,75,100])),
+		list(itertools.permutations([25,50,75])),
+		list(itertools.permutations([50,75,100])),
+		list(itertools.permutations([25,75,100])),
+		list(itertools.permutations([25,50,100])),
+		list(itertools.permutations([25,50])),
+		list(itertools.permutations([25,75])),
+		list(itertools.permutations([25,100])),
+		list(itertools.permutations([50,75])),
+		list(itertools.permutations([50,100])),
+		list(itertools.permutations([75,100])),
+		[(25)],[(50)],[(75)],[(100)]]:
+		arr.append(i)
+	flat_list = []
+	for sublist in arr:
+		print(sublist)
+		for item in sublist:
+		    flat_list.append(item)
+	return flat_list
 
 
 if __name__ == '__main__':
