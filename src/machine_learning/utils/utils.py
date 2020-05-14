@@ -230,7 +230,7 @@ def feature_selection(csv, kind, threshold=0.005, silent=False):
 		if k_test_acc > (d_test_acc - 0.5): #we only accept 5% degradation from the initial test accuracy
 			ratio.append(k_name)
 			ratio.append(k_values)
-			ratio.append(ratio_computation(d_train_acc, k_train_acc, d_time, k_time))
+			ratio.append(ratio_computation(d_test_acc, k_test_acc, d_time, k_time))
 			ratios.append(ratio)
 	
 
@@ -281,7 +281,7 @@ def feature_selection(csv, kind, threshold=0.005, silent=False):
 		if i_test_acc > (d_test_acc - 0.5): #we only accept 5% degradation from the initial test accuracy
 			ratio.append(i_name)
 			ratio.append(i_values)
-			ratio.append(ratio_computation(d_train_acc, i_train_acc, d_time, i_time))
+			ratio.append(ratio_computation(d_test_acc, i_test_acc, d_time, i_time))
 			ratios.append(ratio)
 	
 	if not silent:
@@ -308,7 +308,7 @@ def fs_driver(csv, kind, thresholds, silent=False):
 	k_ratios.sort(key = lambda x: x[2], reverse = True)
 	i_ratios.sort(key = lambda x: x[2], reverse = True)
 
-	return [k_ratios[0][1],i_ratios[0][1]]
+	return [k_ratios[0],i_ratios[0]]
 
 '''
 Compare feature selection performances over time (both with K best feature and iterative process)
@@ -719,5 +719,5 @@ def layers_generator():
 
 
 if __name__ == '__main__':
-	pass
+	print(ratio_computation(0.990648, 0.98909, 0.610979, 0.419793))
 
