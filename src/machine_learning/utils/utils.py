@@ -308,7 +308,7 @@ def fs_driver(csv, kind, thresholds, silent=False):
 	k_ratios.sort(key = lambda x: x[2], reverse = True)
 	i_ratios.sort(key = lambda x: x[2], reverse = True)
 
-	return [k_ratios[0],i_ratios[0]]
+	return [k_ratios[0][1],i_ratios[0][1]]
 
 '''
 Compare feature selection performances over time (both with K best feature and iterative process)
@@ -537,7 +537,7 @@ def single_perf(csv, kind):
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
-	if kind != "tree" and kind != "forest" and kind != "gradient":
+	if kind != "tree" and kind != "forest" and kind != "gradient" and kind != "dl8.5":
 		if kind == "neigh":
 			scaler = Normalizer()
 		else:
