@@ -308,7 +308,10 @@ def fs_driver(csv, kind, thresholds, silent=False):
 	k_ratios.sort(key = lambda x: x[2], reverse = True)
 	i_ratios.sort(key = lambda x: x[2], reverse = True)
 
-	return [k_ratios[0][1],i_ratios[0][1]]
+	#return [k_ratios[0][1],i_ratios[0][1]]
+	bests = [k_ratios[0],i_ratios[0]]
+	bests.sort(key = lambda x: x[2], reverse = True)
+	return bests[0][1]
 
 '''
 Compare feature selection performances over time (both with K best feature and iterative process)
@@ -354,6 +357,42 @@ def feature_snapshot(csv, kind):
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
+def features_solo(csv, kind, only_b=False):
+	
+	clf = algo_picker(kind)
+
+	gt = pd.read_csv(csv)
+	cols = [col for col in gt.columns if col not in ['label']]
+	data = gt[cols]
+	target = gt['label']
+	if only_b:
+		new_gt = convert(gt,True)
+		data = new_gt.values
+		df1 = pd.DataFrame(data=data[0:,0:],
+	                    index=[i for i in range(data.shape[0])],
+	                    columns=['f'+str(i) for i in range(1, data.shape[1]+1)])
+		df2 = pd.DataFrame({'label':target})
+		df = df1.join(df2)
+		print(df)
+		df.to_csv('/tmp/boolean.csv',index=False)
+		csv = '/tmp/boolean.csv'
+
+	thresholds = [0.005,0.01,0.05,0.1,0.2,0.4]
+	features = fs_driver(csv, kind, thresholds, True)
+
+	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	if kind != "tree" and kind != "forest" and kind != "gradient":
+		scaler = StandardScaler()
+		scaler.fit(data_train)
+		data_train = scaler.transform(data_train)
+		data_test = scaler.transform(data_test)
+
+	g_start = perf_counter()
+	clf.fit(data_train, target_train)
+	g_end = perf_counter()
+	g_time = g_end - g_start
+	return [clf.score(data_train, target_train), clf.score(data_test, target_test), g_time]
 
 '''
 Used to parse Thomas datasets into new ones that fit our classifiers
@@ -384,7 +423,7 @@ def thomas_parser(csv_path):
 	data = np.array(data_filter)
 	df1 = pd.DataFrame(data=data[0:,0:],
 	                    index=[i for i in range(data.shape[0])],
-	                    columns=['f'+str(i+1) for i in range(1, data_train.shape[1]+1)])
+	                    columns=['f'+str(i) for i in range(1, data_train.shape[1]+1)])
 	target = np.array(target_filter)
 	df2 = pd.DataFrame({'label':target})
 	df = df1.join(df2)
@@ -524,6 +563,34 @@ def PCA_snapshot(csv, kind, path_to_parent):
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
+def pca_solo(csv, kind, only_b=False):
+	gt = pd.read_csv(csv)
+	if only_b:
+		data = convert(gt,True)
+	else:
+		cols = [col for col in gt.columns if col not in ['label']]
+		data = gt[cols]
+	target = gt['label']
+
+	clf = algo_picker(kind)
+	pca = PCA(n_components=PCA_components(csv, kind, True))
+
+	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
+
+	scaler = StandardScaler()
+	scaler.fit(data_train)
+	data_train = scaler.transform(data_train)
+	data_test = scaler.transform(data_test)	
+
+	pca.fit(data_train)
+	g_start = perf_counter()
+	data_train = pca.transform(data_train)
+	data_test = pca.transform(data_test)
+	clf.fit(data_train, target_train)
+	g_end = perf_counter()
+	g_time = g_end - g_start
+	return [clf.score(data_train, target_train), clf.score(data_test, target_test), g_time]
+
 '''
 Outputs [training accuracy, test accuracy, time] for a classifier over a specifid dataset
 '''
@@ -554,7 +621,7 @@ def single_perf(csv, kind):
 
 
 '''
-Prints performances for a classifier ober a specific dataset
+Prints performances for a classifier obvr a specific dataset
 Allows to use boolean dataset
 '''
 def perf(csv, kind, only_b):
