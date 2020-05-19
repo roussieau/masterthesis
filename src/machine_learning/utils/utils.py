@@ -373,7 +373,6 @@ def features_solo(csv, kind, only_b=False):
 	                    columns=['f'+str(i) for i in range(1, data.shape[1]+1)])
 		df2 = pd.DataFrame({'label':target})
 		df = df1.join(df2)
-		print(df)
 		df.to_csv('/tmp/boolean.csv',index=False)
 		csv = '/tmp/boolean.csv'
 
