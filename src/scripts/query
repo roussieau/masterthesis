@@ -1,0 +1,18 @@
+SELECT DISTINCT D.malware_id as malware_id, E.error, O.other, N.none
+FROM detections D, 
+    (SELECT malware_id, count(*) as error
+     FROM detections
+     WHERE packer like 'error'
+     GROUP BY malware_id) E,
+    (SELECT malware_id, count(*) as other
+    FROM detections
+    WHERE packer not like 'none' AND packer not like 'error'
+    GROUP BY malware_id) O,
+    (SELECT malware_id, count(*) as none 
+    FROM detections
+    WHERE packer like 'none'
+    GROUP BY malware_id) N
+WHERE D.malware_id = E.malware_id
+      AND D.malware_id = O.malware_id
+      AND D.malware_id = N.malware_id
+ORDER BY malware_id;

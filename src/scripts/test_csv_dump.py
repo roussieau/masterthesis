@@ -14,15 +14,37 @@ class TestCsvDump(unittest.TestCase):
         pass
         #print(query_feature_values(1))
 
-    def test_get_labels(self):
+    def test_get_label_threshold(self):
         malwares = [
-            (1, 0, 2, 3, 'upx', 5),
-            (2, 1, 2, 2, 'upx', 5),
-            (3, 0, 3, 2, 'upx', 5),
-            (5, 0, 4, 2, 'upx', 5),
-            (5, 0, 2, 3, 'upx', 5),
+            # id, error, none, other, packer, max_packer)
+            (  1,    0,    2,     3,  'upx',          2),
         ]
-        print(get_labels(3, data = malwares))
+        label = get_labels(3, data=malwares)[0][1]
+        self.assertEqual(label, 1)
+        label = get_labels(4, data=malwares)[0][1]
+        self.assertEqual(label, 0)
+        malwares = [
+            # id, error, none, other, packer, max_packer)
+            (  1,    1,    3,     1,  'upx',          2),
+        ]
+        label = get_labels(3, data=malwares)[0][1]
+        self.assertEqual(label, 0)
+
+
+    def test_get_label_agreement(self):
+        malwares = [
+            # id, error, none, other, packer, max_packer)
+            (  1,    0,    2,     3,  'upx',          2),
+        ]
+        label = get_labels(3, data=malwares, agreement=True)[0][1]
+        self.assertEqual(label, 0)
+        malwares = [
+            # id, error, none, other, packer, max_packer)
+            (  1,    0,    2,     3,  'upx',          3),
+        ]
+        label = get_labels(3, data=malwares, agreement=True)[0][1]
+        self.assertEqual(label, 1)
+        
 
 if __name__ == '__main__':
     unittest.main()
