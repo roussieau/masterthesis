@@ -15,7 +15,7 @@ def display_plot_logreg(csv, t_size, min_c, max_c):
 	target = gt['label']
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = t_size, random_state = 0)
-	scaler = Normalizer()
+	scaler = StandardScaler()
 	scaler.fit(data_train)
 	data_train = scaler.transform(data_train)
 	data_test = scaler.transform(data_test)
@@ -31,8 +31,9 @@ def display_plot_logreg(csv, t_size, min_c, max_c):
 	    test_accuracy.append(clf.score(data_test, target_test))
 	    logreg_settings.append(start_point)
 	    start_point *= 10
-	plt.plot(logreg_settings, training_accuracy, label="training accuracy") 
-	plt.plot(logreg_settings, test_accuracy, label="test accuracy") 
+	plt.plot(range(len(logreg_settings)), training_accuracy, label="training accuracy")
+	plt.plot(range(len(logreg_settings)), test_accuracy, label="test accuracy")
+	plt.xticks(range(len(logreg_settings)),logreg_settings)
 	plt.ylabel("Accuracy")
 	plt.xlabel("C value")
 	plt.legend()
@@ -44,7 +45,7 @@ def display_plot_svc(csv, t_size, min_c, max_c):
 	target = gt['label']
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = t_size, random_state = 0)
-	scaler = Normalizer()
+	scaler = StandardScaler()
 	scaler.fit(data_train)
 	data_train = scaler.transform(data_train)
 	data_test = scaler.transform(data_test)
@@ -60,8 +61,9 @@ def display_plot_svc(csv, t_size, min_c, max_c):
 	    test_accuracy.append(clf.score(data_test, target_test))
 	    svc_settings.append(start_point)
 	    start_point *= 10
-	plt.plot(svc_settings, training_accuracy, label="training accuracy") 
-	plt.plot(svc_settings, test_accuracy, label="test accuracy") 
+	plt.plot(range(len(svc_settings)), training_accuracy, label="training accuracy")
+	plt.plot(range(len(svc_settings)), test_accuracy, label="test accuracy")
+	plt.xticks(range(len(svc_settings)), svc_settings)
 	plt.ylabel("Accuracy")
 	plt.xlabel("C value")
 	plt.legend()

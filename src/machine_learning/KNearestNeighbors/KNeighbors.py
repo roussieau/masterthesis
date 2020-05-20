@@ -32,7 +32,7 @@ def display_plot(csv, t_size, max_neigh):
 	plt.plot(neighbors_settings, training_accuracy, label="training accuracy") 
 	plt.plot(neighbors_settings, test_accuracy, label="test accuracy") 
 	plt.ylabel("Accuracy")
-	plt.xlabel("n_neighbors")
+	plt.xlabel("k")
 	plt.legend()
 
 def sober_results(csv, t_size, neigh):
