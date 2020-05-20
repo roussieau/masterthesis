@@ -165,17 +165,21 @@ def cleaned_labels(labels):
             yield (m_id, error, none, other, packer, number)
 
 
-def get_labels(threshold, error_as_packed=False, detectors=None, agreement=False):
+def get_labels(threshold,
+        error_as_packed=False,
+        detectors=None,
+        agreement=False,
+        data=None ):
     buff = []
-    data = gen_labels_info(detectors)
+    data = data if data else gen_labels_info(detectors)
     for (m_id, error, none, other, packer, number) in cleaned_labels(data):
         if other >= threshold and not agreement:
             buff.append((m_id, 1))
         elif error_as_packed and other + error >= threshold and not agreement:
             buff.append((m_id, 1))
-        elif agreement and other >= threshold:
+        elif agreement and number >= threshold:
             buff.append((m_id, 1))
-        elif agreement and error_as_packed and other + error >= threshold:
+        elif agreement and error_as_packed and number + error >= threshold:
             buff.append((m_id, 1))
         else:
             buff.append((m_id, 0))
