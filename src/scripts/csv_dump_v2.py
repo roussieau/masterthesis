@@ -155,13 +155,14 @@ def zero_if_null(value):
     return value if value else 0
 
 
-def cleaned_labels(labels):
+def cleaned_labels(labels, detector):
+    size = len(detector) if detector else 5
     for (m_id, error, none, other, packer, number) in labels:
         error = zero_if_null(error)
         none = zero_if_null(none)
         other = zero_if_null(other)
         number = zero_if_null(number)
-        if error + none + other == 5:
+        if error + none + other == size:
             yield (m_id, error, none, other, packer, number)
 
 
@@ -172,7 +173,7 @@ def get_labels(threshold,
         data=None ):
     buff = []
     data = data if data else gen_labels_info(detectors)
-    for (m_id, error, none, other, packer, number) in cleaned_labels(data):
+    for (m_id, error, none, other, packer, number) in cleaned_labels(data, detectors):
         if other >= threshold and not agreement:
             buff.append((m_id, 1))
         elif error_as_packed and other + error >= threshold and not agreement:
