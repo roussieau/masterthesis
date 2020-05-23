@@ -375,9 +375,11 @@ def features_solo(csv, kind, only_b=False):
 		df = df1.join(df2)
 		df.to_csv('/tmp/boolean.csv',index=False)
 		csv = '/tmp/boolean.csv'
+		gt = pd.read_csv(csv)
 
 	thresholds = [0.005,0.01,0.05,0.1,0.2,0.4]
 	features = fs_driver(csv, kind, thresholds, True)
+	data = gt[features]
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
@@ -634,10 +636,12 @@ def perf(csv, kind, only_b):
 	target = gt['label']
 
 	clf = algo_picker(kind)
+	print("hlloo")
+	print(clf)
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
-	if kind != "tree" and kind != "forest" and kind != "gradient":
+	if kind != "tree" and kind != "forest" and kind != "gradient" and kind != "dl8.5":
 		if kind == "neigh":
 			scaler = Normalizer()
 		else:
@@ -663,7 +667,7 @@ def perf(csv, kind, only_b):
 
 		data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
-		if kind != "tree" and kind != "forest" and kind != "gradient":
+		if kind != "tree" and kind != "forest" and kind != "gradient" and kind != "dl8.5":
 			if kind == "neigh":
 				scaler = Normalizer()
 			else:
