@@ -357,6 +357,10 @@ def feature_snapshot(csv, kind):
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
+
+'''
+Combines feature selection, boolean conversion and learning/testing
+'''
 def features_solo(csv, kind, only_b=False):
 	
 	clf = algo_picker(kind)
@@ -564,6 +568,10 @@ def PCA_snapshot(csv, kind, path_to_parent):
 	print("Accuracy on training set: {:.3f}".format(clf.score(data_train, target_train))) 
 	print("Accuracy on test set: {:.3f}".format(clf.score(data_test, target_test)))
 
+
+'''
+Combines PCA, boolean conversion and learning/testing
+'''
 def pca_solo(csv, kind, only_b=False):
 	gt = pd.read_csv(csv)
 	if only_b:
@@ -736,6 +744,102 @@ def time_comparison(kind, path_to_parent):
 			cell_text.append(row)
 		print(tabulate(cell_text, headers = ['# malwares in training set','Approx. period in weeks','Training acc','Test acc']))
 
+'''
+Perform economical analysis for a specific classifier
+The idea is to learn over 4 months and then test over multiple different periods of 1 month
+'''
+def economical_analysis(kind, sets):
+	cell_text = []
+	clf = algo_picker(kind)
+	gt = sets[0]
+	gt.to_csv('/tmp/train_set.csv', index=False)
+	train_set = '/tmp/train_set.csv'
+	#gt = pd.read_csv(train_set) #csv with 4 months and threshold set to 5, all detectors (best with agreement for randomforest)
+	cols = [col for col in gt.columns if col not in ['label']]
+	data_train = gt[cols]
+	target_train = gt['label']
+
+	if kind != "neigh":
+		thresholds = [0.005,0.01,0.05,0.1,0.2,0.4]
+		features = fs_driver(train_set, kind, thresholds, True)
+		data_train = gt[features]
+
+	if kind == "log" or kind == "neigh":
+		scaler = StandardScaler()
+		scaler.fit(data_train)
+		data_train = scaler.transform(data_train)
+
+	if kind == "neigh":
+		pca = PCA(n_components=PCA_components(train_set, kind, True))
+		pca.fit(data_train)
+		data_train = pca.transform(data_train)
+
+	clf.fit(data_train, target_train)
+	snap_file = "snapshots/"+kind+".joblib"
+	dump(clf, snap_file)
+	clf = load(snap_file)
+
+	i = 1
+	shape = sets[1].shape[0]
+	for s in sets[1:]: #array of dataframes containing SHAPE samples each, spaced by a SHAPE period
+		row = []
+		row.append(str(i)+" period(s) old")
+		i += 1
+		gt = s
+		gt.to_csv('/tmp/test_set.csv', index=False)
+		train_set = '/tmp/test_set.csv'
+		cols = [col for col in gt.columns if col not in ['label']]
+		data_test = gt[cols]
+		target_test = gt['label']
+
+		if kind != "neigh":
+			data_test = gt[features]
+
+		if kind == "log" or kind == "neigh":
+			data_test = scaler.transform(data_test)
+
+		if kind == "neigh":
+			data_test = pca.transform(data_test)
+
+		row.append(clf.score(data_train, target_train))
+		row.append(clf.score(data_test, target_test))
+		cell_text.append(row)
+	print(tabulate(cell_text, headers = ['Period ('+str(shape)+')','Training acc','Test acc']))
+
+
+'''
+Launches economical analysis for all chosen classifiers
+'''
+def eco_driver(csv):
+	for c in ["neigh","log","tree","forest"]:
+		print("Classifier : "+kind)
+		sets = dataframe_splitter(csv, c) 
+		economical_analysis(c, sets)
+
+'''
+Divides dataframe into 6 equals sub-dataframes
+Credits : http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
+'''
+def dataframe_splitter(csv, kind):
+
+	def index_marks(nrows, chunk_size):
+		return range(1 * chunk_size, (nrows // chunk_size + 1) * chunk_size, chunk_size)
+
+	gt = pd.read_csv(csv)
+	target_test = gt['label']
+	if kind == "neigh" or kind == "log":
+		new_gt = convert(gt,True)
+		data_test = new_gt.values
+		df1 = pd.DataFrame(data=data_test[0:,0:],
+	                    index=[i for i in range(data_test.shape[0])],
+	                    columns=['f'+str(i) for i in range(1, data_test.shape[1]+1)])
+		df2 = pd.DataFrame({'label':target_test})
+		df = df1.join(df2)
+		df.to_csv('/tmp/boolean.csv',index=False)
+		boolean_csv = '/tmp/boolean.csv'
+		gt = pd.read_csv(boolean_csv)
+	indices = list(index_marks(gt.shape[0], -(-gt.shape[0]//6)))
+	return np.split(gt, indices[2:])
 
 '''
 Compute the accuracy/time ratio, i.e. for a loss of 1% precision, how much time do I save
@@ -789,5 +893,5 @@ def layers_generator():
 
 
 if __name__ == '__main__':
-	print(ratio_computation(0.990648, 0.98909, 0.610979, 0.419793))
+	eco_driver('../../dumps/various_sizes/16K.csv')
 
