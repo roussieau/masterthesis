@@ -812,7 +812,7 @@ Launches economical analysis for all chosen classifiers
 '''
 def eco_driver(csv):
 	for c in ["neigh","log","tree","forest"]:
-		print("Classifier : "+kind)
+		print("Classifier : "+ c)
 		sets = dataframe_splitter(csv, c) 
 		economical_analysis(c, sets)
 
