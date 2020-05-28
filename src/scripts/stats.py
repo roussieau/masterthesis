@@ -33,7 +33,10 @@ def get_number_packed(threshold):
         WITH 
         	counter AS (SELECT malware_id, count(*) as occ
 			FROM detections
-			WHERE packer NOT like 'error' AND packer NOT like 'none' AND clean
+			WHERE packer NOT like 'error' 
+			AND packer NOT like 'none' 
+			AND clean
+			AND detector_id != 19
 			GROUP BY malware_id)
 		SELECT count(malware_id)
 		FROM counter
@@ -56,17 +59,19 @@ def get_top_packers():
 	cursor.execute("""
 		SELECT distinct packer, count(*) 
 		FROM detections 
-		WHERE clean 
+		WHERE clean
+		AND detector_id != 19
 		GROUP BY packer 
 		ORDER BY count(*) DESC;
 	""")
-	top = cursor.fetchall()[1:6]
+	top = cursor.fetchall()[1:11]
 	return top
 
 def get_number_detections():
 	cursor.execute("""
 		SELECT count(*) 
-		FROM detections;
+		FROM detections
+		WHERE detector_id != 19;
 	""")
 	amount = cursor.fetchall()[0][0]
 	return amount
@@ -74,7 +79,7 @@ def get_number_detections():
 
 def get_stats(threshold=3):
 	total = get_total_number()
-	packed = get_number_packed(3)
+	packed = get_number_packed(threshold)
 	percentage = (packed/total)*100
 	peid = get_number_packed_per_detector('peid')
 	manalyze = get_number_packed_per_detector('manalyze')
@@ -101,7 +106,7 @@ def get_stats(threshold=3):
 
 
 def main():
-	get_stats(1)
+	get_stats(4)
 
 if __name__ == '__main__':
     main()
