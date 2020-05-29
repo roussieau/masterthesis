@@ -12,7 +12,7 @@ RUN apt-get install -y dialog apt-utils git libpq-dev cmake build-essential vim 
 
 # Install python
 RUN apt-get install -y python3 python3-pip
-RUN pip3 install pefile psycopg2 progress
+RUN pip3 install pefile psycopg2 progress flask flask_restful
 
 WORKDIR /detector/tools/pepac
 RUN git clone https://github.com/avast-tl/pelib.git
