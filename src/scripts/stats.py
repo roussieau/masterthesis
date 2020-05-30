@@ -55,7 +55,7 @@ def get_number_packed_per_detector(detector_name):
 	amount = cursor.fetchall()[0][0]
 	return amount
 
-def get_top_packers():
+def packer_count():
 	cursor.execute("""
 		SELECT distinct packer, count(*) 
 		FROM detections 
@@ -64,8 +64,16 @@ def get_top_packers():
 		GROUP BY packer 
 		ORDER BY count(*) DESC;
 	""")
-	top = cursor.fetchall()[1:11]
-	return top
+	counts = cursor.fetchall()[1:]
+	return counts
+
+def get_top_packers():
+	return packer_count()[:10]
+
+def get_number_packers():
+	counts = packer_count()
+	more_than_ten =  [x for x in counts if x[1] >= 10]
+	return len(more_than_ten)
 
 def get_number_detections():
 	cursor.execute("""
@@ -87,6 +95,7 @@ def get_stats(threshold=3):
 	cisco = get_number_packed_per_detector('cisco')
 	die = get_number_packed_per_detector('detect-it-easy')
 	top = get_top_packers()
+	total_packers_10 = get_number_packers()
 	detections = get_number_detections()
 	proportions = []
 	for i in range(5):
@@ -100,9 +109,10 @@ def get_stats(threshold=3):
 		DIE detected {} malware as packed
 		5 most common packers are : {}
 		and represent respectively {}% of the detections
+		{} packers have been detected at least 10 times
 		""".format(packed, total, round(percentage,2), threshold,
 					peid, manalyze, peframe, cisco, die,
-					top, proportions))
+					top, proportions, total_packers_10))
 
 
 def main():
