@@ -384,6 +384,7 @@ def features_solo(csv, kind, only_b=False):
 	thresholds = [0.005,0.01,0.05,0.1,0.2,0.4]
 	features = fs_driver(csv, kind, thresholds, True)
 	data = gt[features]
+	write_config(features)
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
@@ -644,8 +645,6 @@ def perf(csv, kind, only_b):
 	target = gt['label']
 
 	clf = algo_picker(kind)
-	print("hlloo")
-	print(clf)
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
@@ -762,6 +761,7 @@ def economical_analysis(kind, sets):
 	if kind != "neigh":
 		thresholds = [0.005,0.01,0.05,0.1,0.2,0.4]
 		features = fs_driver(train_set, kind, thresholds, True)
+		write_config(features)
 		data_train = gt[features]
 
 	if kind == "log" or kind == "neigh":
@@ -811,7 +811,7 @@ def economical_analysis(kind, sets):
 Launches economical analysis for all chosen classifiers
 '''
 def eco_driver(csv):
-	for c in ["neigh","log","tree","forest"]:
+	for c in ["tree","forest","log","neigh"]:
 		print("Classifier : "+ c)
 		sets = dataframe_splitter(csv, c) 
 		economical_analysis(c, sets)
@@ -852,6 +852,19 @@ def ratio_computation(from_acc, to_acc, from_time, to_time):
 	else:
 		ratio = diff_time
 	return ratio
+
+'''
+Writes features in config file under appropriate format
+'''
+def write_config(features):
+	# this file and joblib should be copy/paste directly in detector/app ?
+	f = open("snapshots/tree_config.txt", "w")
+	txt = str(features)
+	txt = txt.replace('[','')
+	txt = txt.replace(']','')
+	txt = txt.replace('\'','')
+	f.write(txt)
+	f.close()
 
 '''
 Split a list of features in multiple lines to enhance the display when printed
