@@ -1,6 +1,10 @@
+from time import perf_counter
 from datetime import date
+from joblib import load
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
+import pandas as pd
+import numpy as np
 import werkzeug, sys, os
 
 sys.path.append('../src')
@@ -28,10 +32,16 @@ class MalwareUpload(Resource):
             filename = 'to_scan'
             malware.save(os.path.join(UPLOAD_FOLDER, filename))
             today = date.today().strftime("%d/%m/%Y")
-            decision = detect(Malware(today,UPLOAD_FOLDER+'/'+filename))
+            first = perf_counter()
+            features = get_features(Malware(today,UPLOAD_FOLDER+'/'+filename))
+            second = perf_counter()
+            decision = predict(panda_format(features))
+            third = perf_counter()
             return {
                     'data':'',
                     'message': decision,
+                    'extraction_time': second-first,
+                    'classification_time': third-second,
                     'status':'success'
                     }
         return {
@@ -43,8 +53,23 @@ class MalwareUpload(Resource):
 
 api.add_resource(MalwareUpload,'/upload')
 
-def detect(malware):
+def get_features(malware):
     return Pefeats(malware).analyze()
+
+def predict(features):
+    clf = load('tree.joblib')
+    label = clf.predict(features)[0]
+    return 'packed' if label == 1 else 'not packed'
+
+def panda_format(vector):
+    columns=['f'+str(i) for i in range(1, 120)]
+    f = open("tree_config.txt", "r")
+    txt = f.readline()
+    data = txt.split(" ")
+    best_features = np.array(data)
+    df = pd.DataFrame([vector], columns=columns)
+    return df[best_features]
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
