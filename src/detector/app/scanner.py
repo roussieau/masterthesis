@@ -42,12 +42,12 @@ class MalwareUpload(Resource):
                     'message': decision,
                     'extraction_time': second-first,
                     'classification_time': third-second,
-                    'status':'success'
+                    'status':'200'
                     }
         return {
                 'data':'',
                 'message':'Something when wrong',
-                'status':'error'
+                'status':'400'
                 }
 
 
