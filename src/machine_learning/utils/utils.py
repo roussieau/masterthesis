@@ -324,7 +324,7 @@ def feature_snapshot(csv, kind):
 	clf = algo_picker(kind)
 
 	# K best
-	data_train = gt[features[0]]
+	data_train = gt[features]
 	target_train = gt['label']
 	clf.fit(data_train, target_train)
 	dump(clf,"snapshots/K_best.joblib")
@@ -384,7 +384,6 @@ def features_solo(csv, kind, only_b=False):
 	thresholds = [0.005,0.01,0.05,0.1,0.2,0.4]
 	features = fs_driver(csv, kind, thresholds, True)
 	data = gt[features]
-	write_config(features)
 
 	data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.20, random_state = 0)
 
@@ -399,6 +398,23 @@ def features_solo(csv, kind, only_b=False):
 	g_end = perf_counter()
 	g_time = g_end - g_start
 	return [clf.score(data_train, target_train), clf.score(data_test, target_test), g_time]
+
+'''
+Generate snapshot and config file for final prediction scanner
+'''
+def scanner_snapshot(csv, kind):
+	gt = pd.read_csv(csv)
+	thresholds = [0.005,0.01,0.05,0.1,0.2,0.4]
+	features = fs_driver(csv, kind, thresholds, True)
+	write_config(features)
+
+	clf = algo_picker(kind)
+
+	# K best
+	data_train = gt[features]
+	target_train = gt['label']
+	clf.fit(data_train, target_train)
+	dump(clf,"../detector/app/tree.joblib")
 
 '''
 Used to parse Thomas datasets into new ones that fit our classifiers
@@ -761,7 +777,6 @@ def economical_analysis(kind, sets):
 	if kind != "neigh":
 		thresholds = [0.005,0.01,0.05,0.1,0.2,0.4]
 		features = fs_driver(train_set, kind, thresholds, True)
-		write_config(features)
 		data_train = gt[features]
 
 	if kind == "log" or kind == "neigh":
@@ -857,8 +872,7 @@ def ratio_computation(from_acc, to_acc, from_time, to_time):
 Writes features in config file under appropriate format
 '''
 def write_config(features):
-	# this file and joblib should be copy/paste directly in detector/app ?
-	f = open("snapshots/tree_config.txt", "w")
+	f = open("../detector/app/tree_config.txt", "w+")
 	txt = str(features)
 	txt = txt.replace('[','')
 	txt = txt.replace(']','')
