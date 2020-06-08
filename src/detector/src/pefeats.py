@@ -9,7 +9,7 @@ class Pefeats:
 
     def analyze(self):
         try:
-            output = subprocess.check_output(["./../tools/pefeats/build/pefeats",
+            output = subprocess.check_output(["/detector/tools/pefeats/build/pefeats",
             self.malware.path])
             return output.decode('utf-8').split(',')[1:]
         except:
