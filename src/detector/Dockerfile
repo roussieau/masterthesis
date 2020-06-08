@@ -6,6 +6,7 @@ WORKDIR detector
 
 ADD tools /detector/tools
 ADD src /detector/src
+ADD app /detector/app
 ADD install.sh install.sh
 RUN apt-get -y update
 RUN apt-get install -y dialog apt-utils git libpq-dev cmake build-essential vim unzip

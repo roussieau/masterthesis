@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import werkzeug, sys, os
 
-sys.path.append('../src')
+sys.path.append('../../src')
 from pefeats import Pefeats
 from detector import Malware
 
