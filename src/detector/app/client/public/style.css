@@ -1,0 +1,51 @@
+body {
+    background-color: #F5F4EA;
+}
+
+h1 {
+    text-align: center;
+    padding-top: 50px;
+}
+
+h2 {
+    text-align: right;
+    font-size: 20px;
+    font-style: italic;
+    color: #616160;
+}
+
+section {
+    margin-top:50px;
+}
+
+.card {
+    background-color: #8C65E1;
+    height: 200px;
+    color: white;
+    box-shadow: 2px 2px 20px 0 rgba(0,0,0,0.50);
+}
+
+footer {
+    padding-top: 20px;
+    background-color: white;
+    box-shadow: 0 -2px 15px 0 rgba(0,0,0,0.50);
+    text-align: center;
+}
+
+#microscope {
+    color: white;
+    font-size: 100px;
+    text-align: center;
+    margin-top: 30px;
+}
+
+h5 {
+    margin-top:20px;
+    text-align: center;
+}
+
+
+footer h3 {
+    color: #8C65E1;
+    margin-top:20px;
+}
