@@ -24,10 +24,8 @@ class MalwareUpload(Resource):
         data = parser.parse_args()
         if data['file'] == "":
             return {
-                    'data':'',
                     'message':'No file found',
-                    'status':'error'
-                    }
+                    },415
         malware = data['file']
         if malware:
             filename = 'to_scan'
@@ -39,17 +37,13 @@ class MalwareUpload(Resource):
             decision = predict(panda_format(features))
             third = perf_counter()
             return {
-                    'data':'',
                     'message': decision,
                     'extraction_time': round(second-first,5),
                     'classification_time': round(third-second,5),
-                    'status':'200'
-                    }
+                    },200
         return {
-                'data':'',
                 'message':'Something when wrong',
-                'status':'400'
-                }
+                },500
 
 
 api.add_resource(MalwareUpload,'/upload')
