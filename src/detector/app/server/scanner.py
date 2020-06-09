@@ -41,8 +41,8 @@ class MalwareUpload(Resource):
             return {
                     'data':'',
                     'message': decision,
-                    'extraction_time': second-first,
-                    'classification_time': third-second,
+                    'extraction_time': round(second-first,5),
+                    'classification_time': round(third-second,5),
                     'status':'200'
                     }
         return {
