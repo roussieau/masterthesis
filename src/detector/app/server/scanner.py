@@ -11,6 +11,7 @@ sys.path.append('../../src')
 from pefeats import Pefeats
 from detector import Malware
 
+clf = load('tree.joblib')
 
 app = Flask(__name__)
 api = Api(app)
@@ -57,7 +58,6 @@ def get_features(malware):
     return Pefeats(malware).analyze()
 
 def predict(features):
-    clf = load('tree.joblib')
     label = clf.predict(features)[0]
     return 'packed' if label == 1 else 'not packed'
 
