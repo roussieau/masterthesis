@@ -2,6 +2,7 @@ from time import perf_counter
 from datetime import date
 from joblib import load
 from flask import Flask
+from flask_cors import CORS, cross_origin
 from flask_restful import Resource, Api, reqparse
 import pandas as pd
 import numpy as np
@@ -13,6 +14,8 @@ from detector import Malware
 
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 api = Api(app)
 UPLOAD_FOLDER = '/tmp'
 parser = reqparse.RequestParser()
