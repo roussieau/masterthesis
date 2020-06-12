@@ -12,6 +12,7 @@ sys.path.append('../../src')
 from pefeats import Pefeats
 from detector import Malware
 
+clf = load('tree.joblib')
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -26,10 +27,8 @@ class MalwareUpload(Resource):
         data = parser.parse_args()
         if data['file'] == "":
             return {
-                    'data':'',
                     'message':'No file found',
-                    'status':'error'
-                    }
+                    },415
         malware = data['file']
         if malware:
             filename = 'to_scan'
@@ -41,17 +40,13 @@ class MalwareUpload(Resource):
             decision = predict(panda_format(features))
             third = perf_counter()
             return {
-                    'data':'',
                     'message': decision,
-                    'extraction_time': second-first,
-                    'classification_time': third-second,
-                    'status':'200'
-                    }
+                    'extraction_time': round(second-first,5),
+                    'classification_time': round(third-second,5),
+                    },200
         return {
-                'data':'',
                 'message':'Something when wrong',
-                'status':'400'
-                }
+                },500
 
 
 api.add_resource(MalwareUpload,'/upload')
@@ -60,7 +55,6 @@ def get_features(malware):
     return Pefeats(malware).analyze()
 
 def predict(features):
-    clf = load('tree.joblib')
     label = clf.predict(features)[0]
     return 'packed' if label == 1 else 'not packed'
 

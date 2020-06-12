@@ -4,7 +4,6 @@ import sys
 import os
 import argparse 
 from detectItEasy import DetectItEasy
-from peframe import Peframe
 from manalyze import Manalyze
 from peid import Peid
 from pefeats import Pefeats
