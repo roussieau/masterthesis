@@ -1,0 +1,8 @@
+\begin{abstract}
+Considering that the majority of anti-virus software are signature-based, it is relatively easy for hackers to evade such analysis by compressing or encrypting part of their harmful code. Such technique is often referred to as \textit{packing} and is widely used since nowadays up to 80\% of malware are packed. Detecting if an executable has been packed is therefore a fundamental step in the job of a malware analyst. Various implementations for packing detection have already been proposed but were either not robust enough or suffered from huge time overheads.
+
+In this report, we combine the best of several certified technologies to propose a powerful stand-alone detector. Based on the agreement upon multiple packing detectors, we build a constantly growing database able to produce a plethora of multifarious ground truths. Important sources of learning, they are then given to a selection of fine-tuned machine learning classifiers. Different processes like feature selection and economical analysis are then exploited to reveal and assess the best adjusted model, predicting a new input file with 99.5\% of accuracy in less than 50 milliseconds.
+
+\keywords{obfuscation, malware, Portable Executable file, packing detection, feature extraction, machine learning, economical analysis}
+
+\end{abstract}

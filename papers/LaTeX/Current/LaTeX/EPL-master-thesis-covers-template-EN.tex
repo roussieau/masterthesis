@@ -1,0 +1,72 @@
+% EPL master thesis covers template
+\documentclass{EPL-master-thesis-covers-EN}
+
+%\usepackage{natbib}
+\usepackage[
+    backend=biber,
+    citestyle=numeric,
+    refsegment=section,
+    sorting=none
+]{biblatex}
+\addbibresource{References.bib}
+\usepackage{appendix}
+\usepackage{float}
+\usepackage{graphics}
+\usepackage{subcaption}
+\usepackage{color}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=false,
+    linktoc=all
+}
+\lstset{
+    frame=single
+}
+
+\usepackage{titlesec}
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
+
+% paragraph style
+\setlength{\parindent}{20pt}
+\setlength{\parskip}{0.8em}
+
+
+
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+% Please fill in the following boxes
+% Title of the thesis
+\title{Building a smart and automated tool for packed malware detections}
+
+% Subtitle - remove this line if not applicable
+\subtitle{using machine learning}
+
+% Name of the student author(s)
+\author{Jeremy \textsc{Minet}}
+\secondauthor{Julian \textsc{Roussieau}}
+
+\degreetitle{Master [120] in Computer Science}
+
+% Name of the supervisor(s)
+\supervisor{Axel \textsc{Legay}}
+
+% Name of the reader(s)
+\readerone{Axel \textsc{Legay}}
+\readertwo{Thomas \textsc{Given-Wilson}}
+\readerthree{Kim \textsc{Mens}}
+
+% Academic year (update if necessary)
+\years{2019--2020}
+
+% Document
+\begin{document}
+  % Front cover page
+  \maketitle
+    \input{Current/main}
+  % Back cover page
+  \backcoverpage
+
+\end{document}

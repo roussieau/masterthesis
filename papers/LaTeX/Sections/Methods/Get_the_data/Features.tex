@@ -1,0 +1,16 @@
+\section{Features analysis}
+In the previous section, we showcased a tool that allows packer detection in order to generate the datasets that will be used by  machine learning algorithms. We now run to the next phase. This consists of retrieving the different features of these malware to bind them with their corresponding label. The set of features we chose is the same as the initial one used by Biondi et al. \cite{biondi_effective_2019} which contains 119 features. We would like to extract these features statically such that no time and resource are wasted on starting a new controlled environment. We were granted access to the tool that was designed and used in the paper mentioned above for feature extraction. It acts as a docker container which embeds a software called \texttt{pefeats}. This program takes a malware as input and returns a tuple with all the feature values. 
+
+\begin{lstlisting}
+$ ./pefeats a0977e22deb6abde65a0cbfeb8949558
+(0.0, 1.0, 0.0, ..., 2.0, 0.0, 8.0,0)
+\end{lstlisting}
+Note: as the tuple contains 119 components, we only showed 7 of them for convenience.
+
+As for the detectors, we would like to automate this process. In this respect, we started by retrieving the feature extraction program from the container. We then created a class following the same spirit as for the \texttt{PackerDetector} such that we can easily extract the features from a malware and return the output in the appropriate format. One way to retrieve the features out of a binary is shown below:
+
+\begin{lstlisting}[language=python]
+malware = Malware('20190615', 'malware/a0977e22deb6abde65a0cbfeb8949558')
+feature_analysis = Pefeats(malware)
+feature_analysis.compute(save=false, verbose=true)
+\end{lstlisting}
